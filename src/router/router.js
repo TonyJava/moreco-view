@@ -212,7 +212,7 @@ export const appRouter = [
     },
     {
         path: '/user-center',
-        icon: 'ios-infinite',
+        icon: 'person-stalker',
         name: 'user-center',
         title: '用户中心',
         component: Main,

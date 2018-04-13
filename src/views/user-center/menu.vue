@@ -1,20 +1,41 @@
+<style lang="less">
+    @import '../taroco-components/tarcoco.less';
+</style>
 <template>
     <div>
-        <Row>
-            <!--<FormItem label="Input">-->
-                <!--<Input v-model="formItem.input" placeholder="Enter something..."></Input>-->
-            <!--</FormItem>-->
-            <Button type="primary" icon="ios-search">搜索</Button>
-            <Button >重置</Button>
-        </Row>
-        <div class="margin-top-10">
-            <Row>
-                <Table border stripe :columns="columns7" :data="data6"></Table>
-            </Row>
+        <Card>
+            <Form :label-width="80">
+                <Row>
+                    <Col span="6">
+                        <FormItem label="哈哈">
+                            <Input type="text" placeholder="Username"/>
+                        </FormItem>
+                    </Col>
+                    <Col span="6">
+                        <FormItem label="嘻嘻">
+                            <Input type="password" placeholder="Password"/>
+                        </FormItem>
+                    </Col>
+                    <Col span="6">
+                        <FormItem>
+                            <Button type="primary" icon="ios-search">搜索</Button>
+                            <Button >重置</Button>
+                        </FormItem>
+                    </Col>
+                </Row>
+            </Form>
+        </Card>
+        <div style="margin-top: 20px">
+            <Card>
+                <p slot="title">#用户列表</p>
+                <div class="table-page-footer">
+                    <Table border stripe :columns="columns7" :data="data6"></Table>
+                </div>
+                <Page :total="100" size="small" show-sizer></Page>
+            </Card>
         </div>
 
     </div>
-
 </template>
 <script>
     export default {
@@ -22,6 +43,11 @@
             return {
                 value: '',
                 columns7: [
+                    {
+                        type: 'index',
+                        width: 60,
+                        align: 'center'
+                    },
                     {
                         title: 'Name',
                         key: 'name',

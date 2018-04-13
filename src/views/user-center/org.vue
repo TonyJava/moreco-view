@@ -2,10 +2,18 @@
     <div>
         <Row>
             <Col span="8">
-                <Tree :data="data1"></Tree>
+                <Card>
+                    <div slot="title"><Button type="primary" icon="plus" disabled>添加下级机构</Button></div>
+                    <Tree :data="data1"></Tree>
+                </Card>
             </Col>
+
             <Col span="16" style="padding-left: 10px">
-                <Table border stripe :columns="columns7" :data="data6"></Table>
+                <Card>
+                    <p slot="title">#下级机构</p>
+                    <Table border stripe :columns="columns7" :data="data6"></Table>
+                </Card>
+
             </Col>
         </Row>
     </div>
