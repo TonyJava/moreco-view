@@ -31,7 +31,7 @@
                 <div class="table-page-footer">
                     <Table border stripe :columns="columns7" :data="data6"></Table>
                 </div>
-                <Page :total="100" size="small" show-sizer></Page>
+                <Page :page-size="10" :current="2" :total="100" size="small" show-sizer></Page>
             </Card>
         </div>
 

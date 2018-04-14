@@ -1,7 +1,15 @@
+.login-wrapper {
+    position    : relative;
+    top         : 50%;
+    transform   : translateY(-50%);
+    font-family : "Roboto", sans-serif;
+    text-align  : center;
+}
+
 .login{
     width: 100%;
     height: 100%;
-    background-image: url('https://file.iviewui.com/iview-admin/login_bg.jpg');
+    background-image: url('http://img.zcool.cn/community/01f99057b3bf630000018c1bf6c253.png@1280w_1l_2o_100sh.png');
     background-size: cover;
     background-position: center;
     position: relative;
@@ -26,4 +34,46 @@
             color: #c3c3c3;
         }
     }
+}
+
+.login-box {
+    max-width          : 400px;
+    max-height         : 550px;
+    background-color   : rgba(255, 255, 255, .7);
+    margin-left        : auto;
+    margin-right       : auto;
+    padding            : 10px;
+    left               : 0;
+    right              : 0;
+    border-radius      : 10px;
+    -webkit-box-shadow : 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -moz-box-shadow    : 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    box-shadow         : 0 8px 17px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+.login-box h1 {
+    font-weight : 300;
+    font-size   : 40px;
+}
+
+.login-box h1 span { font-weight : 400; }
+
+.login-box h2 {
+    font-weight : 300;
+    font-size   : 30px;
+}
+
+.login-box .code-preview {
+    width     : 330px;
+    font-size : 15px;
+}
+
+.login-box .effects {
+    width         : 180px;
+    height        : 50px;
+    font-size     : 25px;
+    outline       : none;
+    margin        : 30px auto;
+    opacity       : .7;
+    border-radius : 5px;
 }
