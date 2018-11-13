@@ -12,6 +12,11 @@
 
 [使用文档](https://moreco.weechang.xyz/moreco-view)
 
+[更新日志](https://github.com/iview/iview-admin/releases)
+
+[使用文档](https://lison16.github.io/iview-admin-doc/#/)
+>>>>>>> d750de59282e05b35cc774f633fd304110800d13
+
 [在线访问](https://admin.iviewui.com/)
 
 [简化版模板](https://github.com/iview/iview-admin/tree/template)
