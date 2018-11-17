@@ -1,5 +1,5 @@
 <style lang="less">
-  @import '../../components/moreco-components/moreco.less';
+  @import '../../components/moreco/moreco.less';
 </style>
 <template>
   <div>
