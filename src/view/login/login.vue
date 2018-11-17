@@ -9,6 +9,7 @@
         <div class="form-con">
           <login-form @on-success-valid="handleSubmit"></login-form>
           <p class="login-tip">输入任意用户名和密码即可</p>
+          <p class="login-tip">该页面为静态演示页面</p>
         </div>
       </Card>
     </div>

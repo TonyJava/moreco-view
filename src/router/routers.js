@@ -53,7 +53,7 @@ export default [
     name: 'doc',
     meta: {
       title: '文档',
-      href: 'https://lison16.github.io/iview-admin-doc/#/',
+      href: 'https://moreco-doc.weechang.xyz',
       icon: 'ios-book'
     }
   },
