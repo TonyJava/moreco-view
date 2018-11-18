@@ -5,7 +5,7 @@
   <div>
     <div style="margin-top: 20px">
       <Card>
-        <Button type="primary" icon="ios-search" @click="edit(null)">新增</Button>
+        <Button type="primary" icon="md-add" @click="edit(null)">新增</Button>
       </Card>
       <!--表格-->
       <Card>
@@ -18,48 +18,64 @@
     </div>
     <!--修改-->
     <Modal v-model="editShow" title="编辑目录" @on-ok="ok" @on-cancel="cancel">
-      <input v-model="editObj.id" hidden></input>
-      <div class="input-line">
-        名称：<Input placeholder="请输入名称" style="width: 200px" />
-      </div>
-      <div class="input-line">
-        图标：<Input placeholder="请输入图标" style="width: 200px" />
-      </div>
-      <div class="input-line">
-        类型：<Input placeholder="请输入类型" style="width: 200px" />
-      </div>
-      <div class="input-line">
-        路由：<Input placeholder="请输入类型" style="width: 200px" />
-      </div>
-      <div class="input-line">
-        授权标识：<Input placeholder="请输入类型" style="width: 200px" />
-      </div>
+      <Form :model="editObj" :label-width="60">
+        <FormItem label="id" hidden>
+          <Input v-model="editObj.id"></Input>
+        </FormItem>
+        <FormItem label="名称">
+          <Input v-model="editObj.input" placeholder="请输入名称"></Input>
+        </FormItem>
+        <FormItem label="图标">
+          <Input v-model="editObj.icon" placeholder="请输入图标"></Input>
+        </FormItem>
+        <FormItem label="类型">
+          <Select v-model="editObj.type" style="width:200px">
+            <Option v-for="item in menuTypes" :value="item.key" :key="item.key">{{ item.name }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="排序">
+          <Input v-model="editObj.input" placeholder="请输入排序值"></Input>
+        </FormItem>
+        <FormItem label="路由">
+          <Input v-model="editObj.input" placeholder="请输入路由"></Input>
+        </FormItem>
+        <FormItem label="授权标识">
+          <Input v-model="editObj.input" placeholder="请输入授权标识"></Input>
+        </FormItem>
+      </Form>
     </Modal>
   </div>
 </template>
 <script>
-import { page } from '@/api/moreco-rbac/menu'
+import { page, toList } from '@/api/moreco-rbac/menu'
 export default {
   data () {
     return {
       // 表格列
       columns: [
         {
-          type: 'index',
-          width: 60,
-          align: 'center'
-        },
-        {
           title: '名称',
-          key: 'name'
+          key: 'name',
+          fixed: 'left'
         },
         {
           title: '图标',
-          key: 'icon'
+          key: 'icon',
+          render: (h, params) => {
+            return h('Icon', {
+              props: {
+                type: params.row.icon,
+                size: 24
+              }
+            })
+          }
         },
         {
           title: '类型',
-          key: 'type'
+          key: 'type',
+          render: (h, params) => {
+            return h('div', {}, params.row.dataMap.type)
+          }
         },
         {
           title: '排序',
@@ -76,8 +92,9 @@ export default {
         {
           title: '操作',
           key: 'action',
-          width: 150,
+          width: 200,
           align: 'center',
+          fixed: 'right',
           render: (h, params) => {
             return h('div', [
               h('Button', {
@@ -94,6 +111,18 @@ export default {
                   }
                 }
               }, '修改'),
+              h('Button', {
+                props: {
+                  type: 'success',
+                  size: 'small'
+                },
+                on: {
+                  click: () => {
+                    this.remove(params.id)
+                  }
+                }
+              }, '管理下级'),
+              h('span', {}, ' '),
               h('Button', {
                 props: {
                   type: 'error',
@@ -116,13 +145,23 @@ export default {
       totalCount: 0,
       // 编辑
       editShow: false,
-      editObj: {}
+      editObj: {},
+      parentId: null,
+      menuTypes: []
     }
   },
   methods: {
+    // 页面初始化
+    initPage () {
+      toList().then(res => {
+        if (res.data.code === 0) {
+          this.menuTypes = res.data.result.menuTypes
+        }
+      })
+    },
     // 表格查询
     doQuery () {
-      page(this.currPage).then(res => {
+      page(this.parentId, this.currPage).then(res => {
         if (res.data.code === 0) {
           this.currPage = res.data.result.currPage
           this.pageSize = res.data.result.pageSize
@@ -135,7 +174,6 @@ export default {
     },
     // 编辑
     edit (id) {
-      console.log(id)
       this.editShow = true
     },
     remove (index) {
@@ -149,6 +187,7 @@ export default {
     }
   },
   mounted () {
+    this.initPage()
     this.doQuery()
   }
 }

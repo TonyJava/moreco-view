@@ -3,74 +3,79 @@
 </style>
 <template>
   <div>
-    <Card>
-      <Form :label-width="80">
-        <Row>
-          <Col span="6">
-            <FormItem label="用户名">
-              <Input type="text" placeholder="用户名"/>
-            </FormItem>
-          </Col>
-          <Col span="6">
-            <FormItem>
-              <Button type="primary" icon="ios-search">搜索</Button>
-            </FormItem>
-          </Col>
-        </Row>
-      </Form>
-    </Card>
     <div style="margin-top: 20px">
+      <Card>
+        <Button type="primary" icon="ios-search" @click="edit(null)">新增</Button>
+      </Card>
+      <!--表格-->
       <Card>
         <p slot="title">#用户列表</p>
         <div class="table-page-footer">
-          <Table border stripe :columns="columns7" :data="data6"></Table>
+          <Table border stripe :columns="columns" :data="pageData"></Table>
         </div>
-        <Page :page-size="10" :current="2" :total="100" size="small" show-sizer></Page>
+        <Page :current="currPage" :page-size="pageSize" :total="totalCount" size="small" show-sizer></Page>
       </Card>
     </div>
-
+    <!--修改-->
+    <Modal v-model="editShow" title="编辑目录" @on-ok="ok" @on-cancel="cancel">
+      <input v-model="editObj.id" hidden></input>
+      <div class="input-line">
+        名称：<Input placeholder="请输入名称" style="width: 200px"/>
+      </div>
+      <div class="input-line">
+        图标：<Input placeholder="请输入图标" style="width: 200px"/>
+      </div>
+      <div class="input-line">
+        类型：<Input placeholder="请输入类型" style="width: 200px"/>
+      </div>
+      <div class="input-line">
+        路由：<Input placeholder="请输入类型" style="width: 200px"/>
+      </div>
+      <div class="input-line">
+        授权标识：<Input placeholder="请输入类型" style="width: 200px"/>
+      </div>
+    </Modal>
   </div>
 </template>
 <script>
+import {page} from '@/api/moreco-rbac/menu'
+
 export default {
   data () {
     return {
-      value: '',
-      columns7: [
-        {
-          type: 'index',
-          width: 60,
-          align: 'center'
-        },
+      // 表格列
+      columns: [
         {
           title: '用户名',
-          key: 'name'
+          key: 'name',
+          fixed: 'left'
         },
         {
           title: '所属部门',
-          key: ''
+          key: 'perms'
         },
         {
           title: '邮箱',
-          key: 'age'
+          key: 'icon'
         },
         {
           title: '手机号',
-          key: 'address'
+          key: 'type'
         },
         {
           title: '状态',
-          key: 'address'
+          key: 'orderNum'
         },
         {
           title: '创建时间',
-          key: 'address'
+          key: 'url'
         },
         {
           title: '操作',
           key: 'action',
-          width: 150,
+          width: 200,
           align: 'center',
+          fixed: 'right',
           render: (h, params) => {
             return h('div', [
               h('Button', {
@@ -83,10 +88,10 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.show(params.index)
+                    this.edit(params.id)
                   }
                 }
-              }, 'View'),
+              }, '修改'),
               h('Button', {
                 props: {
                   type: 'error',
@@ -94,48 +99,55 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.remove(params.index)
+                    this.remove(params.id)
                   }
                 }
-              }, 'Delete')
+              }, '删除')
             ])
           }
         }
       ],
-      data6: [
-        {
-          name: 'John Brown',
-          age: 18,
-          address: 'New York No. 1 Lake Park'
-        },
-        {
-          name: 'Jim Green',
-          age: 24,
-          address: 'London No. 1 Lake Park'
-        },
-        {
-          name: 'Joe Black',
-          age: 30,
-          address: 'Sydney No. 1 Lake Park'
-        },
-        {
-          name: 'Jon Snow',
-          age: 26,
-          address: 'Ottawa No. 2 Lake Park'
-        }
-      ]
+      // 表格参数
+      pageData: [],
+      currPage: 1,
+      pageSize: 10,
+      totalCount: 0,
+      // 编辑
+      editShow: false,
+      editObj: {}
     }
   },
   methods: {
-    show (index) {
-      this.$Modal.info({
-        title: 'User Info',
-        content: `Name：${this.data6[index].name}<br>Age：${this.data6[index].age}<br>Address：${this.data6[index].address}`
+    // 表格查询
+    doQuery () {
+      page(this.currPage).then(res => {
+        if (res.data.code === 0) {
+          this.currPage = res.data.result.currPage
+          this.pageSize = res.data.result.pageSize
+          this.totalCount = res.data.result.totalCount
+          this.pageData = res.data.result.list
+        }
+      }).catch(err => {
+        console.log(err)
       })
+    },
+    // 编辑
+    edit (id) {
+      console.log(id)
+      this.editShow = true
     },
     remove (index) {
       this.data6.splice(index, 1)
+    },
+    ok () {
+      this.$Message.info('Clicked ok')
+    },
+    cancel () {
+      this.$Message.info('Clicked cancel')
     }
+  },
+  mounted () {
+    this.doQuery()
   }
 }
 </script>
