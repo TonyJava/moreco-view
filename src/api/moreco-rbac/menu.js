@@ -25,7 +25,7 @@ export const save = (menuObj) => {
   return axios.request({
     url: 'rbac/menu/save',
     method: 'POST',
-    params: menuObj
+    data: menuObj
   })
 }
 
