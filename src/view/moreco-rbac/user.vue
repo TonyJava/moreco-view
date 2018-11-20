@@ -38,7 +38,7 @@
   </div>
 </template>
 <script>
-import {page} from '@/api/moreco-rbac/menu'
+import {page} from '@/api/moreco-rbac/user'
 
 export default {
   data () {

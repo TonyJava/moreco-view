@@ -35,6 +35,12 @@ class HttpRequest {
   interceptors (instance, url) {
     // 请求拦截
     instance.interceptors.request.use(config => {
+      // 拦截delete 操作
+      var mtd = config.method
+      if (mtd.toUpperCase() === 'DELETE') {
+        config.method = 'POST'
+        config.params = {'_method': mtd}
+      }
       // 添加全局的loading...
       if (!Object.keys(this.queue).length) {
         // Spin.show() // 不建议开启，因为界面不友好

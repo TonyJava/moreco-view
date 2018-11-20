@@ -10,7 +10,7 @@
       </Card>
       <!--表格-->
       <Card>
-        <p slot="title">#目录列表</p>
+        <p slot="title">#组织机构列表</p>
         <div class="table-page-footer">
           <Table border stripe :columns="columns" :data="pageData"></Table>
         </div>
@@ -18,43 +18,29 @@
       </Card>
     </div>
     <!--修改-->
-    <Modal v-model="editShow" title="编辑目录" @on-ok="save">
-      <Form :model="menuObj" :label-width="60">
+    <Modal v-model="editShow" title="编辑组织机构" @on-ok="save">
+      <Form :model="deptObj" :label-width="60">
         <FormItem label="id" hidden>
-          <Input v-model="menuObj.id"></Input>
+          <Input v-model="deptObj.id"></Input>
         </FormItem>
         <FormItem label="parentId" hidden>
-          <Input v-model="menuObj.parentId"></Input>
+          <Input v-model="deptObj.parentId"></Input>
         </FormItem>
-        <FormItem label="上级目录">
+        <FormItem label="上级机构">
           <Input v-model="this.parentName" disabled="disabled"></Input>
         </FormItem>
         <FormItem label="名称">
-          <Input v-model="menuObj.name" placeholder="请输入名称"></Input>
-        </FormItem>
-        <FormItem label="图标">
-          <Input v-model="menuObj.icon" placeholder="请输入图标"></Input>
-        </FormItem>
-        <FormItem label="类型">
-          <Select v-model="menuObj.type" style="width:200px">
-            <Option v-for="item in menuTypes" :value="item.key" aria-selected="menuObj.type === item.key" :key="item.key">{{ item.name }}</Option>
-          </Select>
+          <Input v-model="deptObj.name" placeholder="请输入名称"></Input>
         </FormItem>
         <FormItem label="排序">
-          <Input v-model="menuObj.orderNum" placeholder="请输入排序值"></Input>
-        </FormItem>
-        <FormItem label="路由">
-          <Input v-model="menuObj.url" placeholder="请输入路由"></Input>
-        </FormItem>
-        <FormItem label="授权标识">
-          <Input v-model="menuObj.perms" placeholder="请输入授权标识"></Input>
+          <Input v-model="deptObj.orderNum" placeholder="请输入排序值"></Input>
         </FormItem>
       </Form>
     </Modal>
   </div>
 </template>
 <script>
-import { page, toPage, detail, save, del } from '@/api/moreco-rbac/menu'
+import { page, detail, save, del } from '@/api/moreco-rbac/dept'
 export default {
   data () {
     return {
@@ -66,35 +52,8 @@ export default {
           fixed: 'left'
         },
         {
-          title: '图标',
-          key: 'icon',
-          render: (h, params) => {
-            return h('Icon', {
-              props: {
-                type: params.row.icon,
-                size: 24
-              }
-            })
-          }
-        },
-        {
-          title: '类型',
-          key: 'type',
-          render: (h, params) => {
-            return h('div', {}, params.row.dataMap.type)
-          }
-        },
-        {
           title: '排序',
           key: 'orderNum'
-        },
-        {
-          title: '路由',
-          key: 'url'
-        },
-        {
-          title: '授权标识',
-          key: 'perms'
         },
         {
           title: '操作',
@@ -156,23 +115,15 @@ export default {
       totalCount: 0,
       // 编辑
       editShow: false,
-      menuObj: {},
+      deptObj: {},
       parentId: 0,
-      parentName: '顶级目录',
+      parentName: '顶级部门',
       parentIdStack: [],
       parentNameStack: [],
       menuTypes: []
     }
   },
   methods: {
-    // 页面初始化
-    initPage () {
-      toPage().then(res => {
-        if (res.data.code === 0) {
-          this.menuTypes = res.data.result.menuTypes
-        }
-      })
-    },
     // 表格查询
     doQuery () {
       page(this.parentId, this.currPage).then(res => {
@@ -197,10 +148,11 @@ export default {
     },
     // 保存
     save () {
-      if (this.menuObj.parentId === 'undefined') {
-        this.menuObj.parentId = this.parentId
+      console.log(this.deptObj.parentId)
+      if (this.deptObj.parentId === 'undefined') {
+        this.deptObj.parentId = this.parentId
       }
-      save(this.menuObj).then(res => {
+      save(this.deptObj).then(res => {
         if (res.data.code === 0) {
           this.doQuery()
         }
@@ -222,7 +174,6 @@ export default {
     }
   },
   mounted () {
-    this.initPage()
     this.doQuery()
   }
 }

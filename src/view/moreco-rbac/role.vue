@@ -5,7 +5,7 @@
   <div>
     <div style="margin-top: 20px">
       <Card>
-        <Button type="primary" icon="ios-search" @click="edit(null)">新增</Button>
+        <Button type="primary" icon="ios-search" @click="openEdit(null)">新增</Button>
       </Card>
       <!--表格-->
       <Card>
@@ -17,28 +17,35 @@
       </Card>
     </div>
     <!--修改-->
-    <Modal v-model="editShow" title="编辑目录" @on-ok="ok" @on-cancel="cancel">
-      <input v-model="editObj.id" hidden></input>
-      <div class="input-line">
-        名称：<Input placeholder="请输入名称" style="width: 200px" />
-      </div>
-      <div class="input-line">
-        图标：<Input placeholder="请输入图标" style="width: 200px" />
-      </div>
-      <div class="input-line">
-        类型：<Input placeholder="请输入类型" style="width: 200px" />
-      </div>
-      <div class="input-line">
-        路由：<Input placeholder="请输入类型" style="width: 200px" />
-      </div>
-      <div class="input-line">
-        授权标识：<Input placeholder="请输入类型" style="width: 200px" />
-      </div>
+    <Modal v-model="editShow" title="编辑角色" @on-ok="save()">
+      <Form :model="roleObj" :label-width="60">
+        <FormItem label="id" hidden>
+          <Input v-model="roleObj.id"></Input>
+        </FormItem>
+        <FormItem label="名称">
+          <Input v-model="roleObj.name" placeholder="请输入名称"></Input>
+        </FormItem>
+        <FormItem label="备注">
+          <Input v-model="roleObj.remark" placeholder="请输入备注"></Input>
+        </FormItem>
+        <Row>
+          <Col span="12">
+            <div>目录权限</div>
+            <Tree :data="roleMenus" show-checkbox ref="roleMenuTree"></Tree>
+          </Col>
+          <Col span="12">
+            <div>数据权限</div>
+            <Tree :data="roleDepts" show-checkbox ref="roleDeptTree"></Tree>
+          </Col>
+        </Row>
+      </Form>
     </Modal>
   </div>
 </template>
 <script>
-import { page } from '@/api/moreco-rbac/menu'
+import { page, detail, save, del } from '@/api/moreco-rbac/role'
+import { menuTree } from '@/api/moreco-rbac/menu'
+import { deptTree } from '@/api/moreco-rbac/dept'
 export default {
   data () {
     return {
@@ -51,16 +58,19 @@ export default {
         },
         {
           title: '备注',
-          key: 'icon'
+          key: 'remark'
         },
         {
           title: '创建时间',
-          key: 'type'
+          key: 'createdDate',
+          render: (h, params) => {
+            return h('div', null, params.row.dataMap.createdDate)
+          }
         },
         {
           title: '操作',
           key: 'action',
-          width: 200,
+          width: 150,
           align: 'center',
           fixed: 'right',
           render: (h, params) => {
@@ -75,7 +85,7 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.edit(params.id)
+                    this.openEdit(params.row.id)
                   }
                 }
               }, '修改'),
@@ -86,7 +96,7 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.remove(params.id)
+                    this.remove(params.row.id)
                   }
                 }
               }, '删除')
@@ -101,7 +111,9 @@ export default {
       totalCount: 0,
       // 编辑
       editShow: false,
-      editObj: {}
+      roleObj: {},
+      roleMenus: [],
+      roleDepts: []
     }
   },
   methods: {
@@ -118,19 +130,87 @@ export default {
         console.log(err)
       })
     },
-    // 编辑
-    edit (id) {
-      console.log(id)
+    // 打开编辑
+    openEdit (id) {
+      if (id !== null) {
+        detail(id).then(res => {
+          if (res.data.code === 0) {
+            this.roleObj = res.data.result
+          }
+        }).then(this.permInit)
+      }
       this.editShow = true
     },
-    remove (index) {
-      this.data6.splice(index, 1)
+    // 删除
+    remove (id) {
+      del(id).then(res => {
+        if (res.data.code === 0) {
+          this.doQuery()
+        }
+      })
     },
-    ok () {
-      this.$Message.info('Clicked ok')
+    // 保存
+    save () {
+      var menuNodes = this.$refs.roleMenuTree.getCheckedNodes()
+      var deptNodes = this.$refs.roleDeptTree.getCheckedNodes()
+      var menuIdList = []
+      var deptIdList = []
+      for (var i in menuNodes) {
+        menuIdList.push(menuNodes[i].id)
+      }
+      for (var j in deptNodes) {
+        deptIdList.push(deptNodes[j].id)
+      }
+      this.roleObj.menuIdList = menuIdList
+      this.roleObj.deptIdList = deptIdList
+      save(this.roleObj).then(res => {
+        if (res.data.code === 0) {
+          this.doQuery()
+        }
+      })
     },
-    cancel () {
-      this.$Message.info('Clicked cancel')
+    // 授权拼接
+    permInit () {
+      menuTree().then(res => {
+        if (res.data.code === 0) {
+          this.roleMenus = this.convert2MenuTree(res.data.result)
+        }
+      })
+      deptTree().then(res => {
+        if (res.data.code === 0) {
+          this.roleDepts = this.convert2DeptTree(res.data.result)
+        }
+      })
+    },
+    // 转换成树形数据
+    convert2MenuTree (menus) {
+      var menuTree = []
+      for (var i in menus) {
+        var item = menus[i]
+        var menu = {}
+        menu.id = item.id
+        menu.title = item.name
+        menu.expand = false
+        menu.checked = (this.roleObj.menuIdList.indexOf(item.id) > -1)
+        menu.children = this.convert2MenuTree(item.children)
+        menuTree.push(menu)
+      }
+      return menuTree
+    },
+    // 转换成树形数据
+    convert2DeptTree (depts) {
+      var deptTree = []
+      for (var i in depts) {
+        var item = depts[i]
+        var dept = {}
+        dept.id = item.id
+        dept.title = item.name
+        dept.expand = false
+        dept.checked = this.roleObj.deptIdList.indexOf(item.id) > -1
+        dept.children = this.convert2DeptTree(item.children)
+        deptTree.push(dept)
+      }
+      return deptTree
     }
   },
   mounted () {

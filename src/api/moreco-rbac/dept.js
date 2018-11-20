@@ -2,28 +2,21 @@ import axios from '@/libs/api.request'
 
 export const page = (parentId, index) => {
   return axios.request({
-    url: 'rbac/menu/page/' + parentId + '/' + index,
-    method: 'GET'
-  })
-}
-
-export const toPage = () => {
-  return axios.request({
-    url: 'rbac/menu/toPage',
+    url: 'rbac/dept/page/' + parentId + '/' + index,
     method: 'GET'
   })
 }
 
 export const detail = (id) => {
   return axios.request({
-    url: 'rbac/menu/detail/' + id,
+    url: 'rbac/dept/detail/' + id,
     method: 'GET'
   })
 }
 
 export const save = (menuObj) => {
   return axios.request({
-    url: 'rbac/menu/save',
+    url: 'rbac/dept/save',
     method: 'POST',
     params: menuObj
   })
@@ -31,14 +24,14 @@ export const save = (menuObj) => {
 
 export const del = (id) => {
   return axios.request({
-    url: 'rbac/menu/delete/' + id,
+    url: 'rbac/dept/delete/' + id,
     method: 'DELETE'
   })
 }
 
-export const menuTree = () => {
+export const deptTree = () => {
   return axios.request({
-    url: 'rbac/menu/tree',
+    url: 'rbac/dept/tree',
     method: 'GET'
   })
 }

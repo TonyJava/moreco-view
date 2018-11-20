@@ -102,7 +102,7 @@ export default [
           icon: 'md-funnel',
           title: '组织机构'
         },
-        component: () => import('@/view/moreco-rbac/org.vue')
+        component: () => import('@/view/moreco-rbac/dept.vue')
       },
       {
         path: 'role',

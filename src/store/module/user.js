@@ -7,7 +7,7 @@ import {
   hasRead,
   removeReaded,
   restoreTrash
-} from '@/api/user'
+} from '@/api/user.js'
 import { setToken, getToken } from '@/libs/util'
 
 export default {
