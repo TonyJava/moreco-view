@@ -1,6 +1,7 @@
 import axios from 'axios'
 import store from '@/store'
 // import { Spin } from 'iview'
+import { Message } from 'iview'
 const addErrorLog = errorInfo => {
   const { statusText, status, request: { responseURL } } = errorInfo
   let info = {
@@ -36,10 +37,10 @@ class HttpRequest {
     // 请求拦截
     instance.interceptors.request.use(config => {
       // 拦截delete 操作
-      var mtd = config.method
-      if (mtd.toUpperCase() === 'DELETE') {
+      var requestMethod = config.method
+      if (requestMethod.toUpperCase() === 'DELETE') {
         config.method = 'POST'
-        config.params = {'_method': mtd}
+        config.params = {'_method': requestMethod}
       }
       // 添加全局的loading...
       if (!Object.keys(this.queue).length) {
@@ -57,6 +58,10 @@ class HttpRequest {
       return { data, status }
     }, error => {
       this.destroy(url)
+      if (error.response.data.code !== 0) {
+        let msg = error.response.data.msg === null ? '未知错误' : error.response.data.msg
+        Message.error(msg)
+      }
       addErrorLog(error.response)
       return Promise.reject(error)
     })

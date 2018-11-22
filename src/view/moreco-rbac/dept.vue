@@ -11,14 +11,14 @@
       <!--表格-->
       <Card>
         <p slot="title">#组织机构列表</p>
-        <div class="table-page-footer">
+        <div class="moreco-table">
           <Table border stripe :columns="columns" :data="pageData"></Table>
         </div>
         <Page :current="currPage" :page-size="pageSize" :total="totalCount" size="small" show-sizer></Page>
       </Card>
     </div>
     <!--修改-->
-    <Modal v-model="editShow" title="编辑组织机构" @on-ok="save">
+    <Modal v-model="editShow" title="编辑组织机构">
       <Form :model="deptObj" :label-width="60">
         <FormItem label="id" hidden>
           <Input v-model="deptObj.id"></Input>
@@ -36,11 +36,15 @@
           <Input v-model="deptObj.orderNum" placeholder="请输入排序值"></Input>
         </FormItem>
       </Form>
+      <div slot="footer">
+        <Button @click="closeEdit">取消</Button>
+        <Button type="primary" :loading="editLoading" @click="save">保存</Button>
+      </div>
     </Modal>
   </div>
 </template>
 <script>
-import { page, detail, save, del } from '@/api/moreco-rbac/dept'
+import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco-rbac/dept'
 export default {
   data () {
     return {
@@ -115,6 +119,7 @@ export default {
       totalCount: 0,
       // 编辑
       editShow: false,
+      editLoading: false,
       deptObj: {},
       parentId: 0,
       parentName: '顶级部门',
@@ -126,7 +131,7 @@ export default {
   methods: {
     // 表格查询
     doQuery () {
-      page(this.parentId, this.currPage).then(res => {
+      apiPage(this.parentId, this.currPage).then(res => {
         if (res.data.code === 0) {
           this.currPage = res.data.result.currPage
           this.pageSize = res.data.result.pageSize
@@ -138,29 +143,37 @@ export default {
     // 打开编辑
     openEdit (id) {
       if (id !== null) {
-        detail(id).then(res => {
+        apiDetail(id).then(res => {
           if (res.data.code === 0) {
-            this.menuObj = res.data.result
+            this.deptObj = res.data.result
           }
         })
+      } else {
+        this.deptObj = {}
       }
       this.editShow = true
     },
+    // 关闭编辑
+    closeEdit () {
+      this.editShow = false
+      this.editLoading = false
+    },
     // 保存
     save () {
-      console.log(this.deptObj.parentId)
-      if (this.deptObj.parentId === 'undefined') {
-        this.deptObj.parentId = this.parentId
-      }
-      save(this.deptObj).then(res => {
+      this.editLoading = true
+      this.deptObj.parentId = this.parentId
+      apiSave(this.deptObj).then(res => {
         if (res.data.code === 0) {
+          this.editShow = false
           this.doQuery()
         }
+      }).finally(() => {
+        this.editLoading = false
       })
     },
     // 删除
     remove (id) {
-      del(id).then(res => {
+      apiDelete(id).then(res => {
         if (res.data.code === 0) {
           this.doQuery()
         }

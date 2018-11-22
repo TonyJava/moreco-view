@@ -71,7 +71,7 @@ export default [
         name: 'message_page',
         meta: {
           icon: 'md-notifications',
-          title: '消息中心'
+          title: 'message_page'
         },
         component: () => import('@/view/single-page/message/index.vue')
       }
@@ -79,46 +79,46 @@ export default [
   },
   {
     path: '/moreco-rbac',
-    name: 'RBAC',
+    name: 'rbac',
     meta: {
-      icon: 'md-menu',
-      title: 'RBAC'
+      icon: 'md-unlock',
+      title: 'rbac'
     },
     component: Main,
     children: [
       {
         path: 'menu',
-        name: '目录管理',
+        name: 'rbac_menu',
         meta: {
-          icon: 'md-funnel',
-          title: '目录管理'
+          icon: 'md-menu',
+          title: 'rbac_menu'
         },
         component: () => import('@/view/moreco-rbac/menu.vue')
       },
       {
-        path: 'org',
-        name: '组织机构',
+        path: 'dept',
+        name: 'rbac_dept',
         meta: {
-          icon: 'md-funnel',
-          title: '组织机构'
+          icon: 'md-home',
+          title: 'rbac_dept'
         },
         component: () => import('@/view/moreco-rbac/dept.vue')
       },
       {
         path: 'role',
-        name: '角色管理',
+        name: 'rbac_role',
         meta: {
-          icon: 'md-funnel',
-          title: '角色管理'
+          icon: 'md-people',
+          title: 'rbac_role'
         },
         component: () => import('@/view/moreco-rbac/role.vue')
       },
       {
         path: 'user',
-        name: '用户管理',
+        name: 'rbac_user',
         meta: {
-          icon: 'md-funnel',
-          title: '用户管理'
+          icon: 'md-person',
+          title: 'rbac_user'
         },
         component: () => import('@/view/moreco-rbac/user.vue')
       }

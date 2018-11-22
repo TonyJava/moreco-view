@@ -5,41 +5,58 @@
   <div>
     <div style="margin-top: 20px">
       <Card>
-        <Button type="primary" icon="ios-search" @click="edit(null)">新增</Button>
+        <Button type="primary" icon="md-add" @click="openEdit(null)">新增</Button>
       </Card>
       <!--表格-->
       <Card>
         <p slot="title">#用户列表</p>
-        <div class="table-page-footer">
+        <div class="moreco-table">
           <Table border stripe :columns="columns" :data="pageData"></Table>
         </div>
         <Page :current="currPage" :page-size="pageSize" :total="totalCount" size="small" show-sizer></Page>
       </Card>
     </div>
     <!--修改-->
-    <Modal v-model="editShow" title="编辑目录" @on-ok="ok" @on-cancel="cancel">
-      <input v-model="editObj.id" hidden></input>
-      <div class="input-line">
-        名称：<Input placeholder="请输入名称" style="width: 200px"/>
-      </div>
-      <div class="input-line">
-        图标：<Input placeholder="请输入图标" style="width: 200px"/>
-      </div>
-      <div class="input-line">
-        类型：<Input placeholder="请输入类型" style="width: 200px"/>
-      </div>
-      <div class="input-line">
-        路由：<Input placeholder="请输入类型" style="width: 200px"/>
-      </div>
-      <div class="input-line">
-        授权标识：<Input placeholder="请输入类型" style="width: 200px"/>
+    <Modal v-model="editShow" title="编辑用户">
+      <Form :model="userObj" :label-width="60">
+        <FormItem label="id" hidden>
+          <Input v-model="userObj.id"></Input>
+        </FormItem>
+        <FormItem label="用户名">
+          <Input v-model="userObj.username" :disabled="userObj.id !== null && userObj.id !== undefined" placeholder="请输入用户名"></Input>
+        </FormItem>
+        <FormItem label="真实姓名">
+          <Input v-model="userObj.realName" placeholder="请输入真实姓名"></Input>
+        </FormItem>
+        <FormItem label="邮箱">
+          <Input v-model="userObj.email" placeholder="请输入邮箱"></Input>
+        </FormItem>
+        <FormItem label="电话">
+          <Input v-model="userObj.mobile" placeholder="请输入电话"></Input>
+        </FormItem>
+        <FormItem label="授权角色">
+          <Select v-model="userObj.roleIds" multiple filterable placeholder="请选择角色">
+            <Option v-for="item in roles" :value="item.id"  :key="item.key">{{ item.name }}</Option>
+          </Select>
+        </FormItem>
+        <FormItem label="所属部门" hidden>
+          <Input v-model="userObj.deptId"></Input>
+        </FormItem>
+        <FormItem label="所属部门">
+          <Tree :data="userDepts" ref="userDeptTree"></Tree>
+        </FormItem>
+      </Form>
+      <div slot="footer">
+        <Button @click="closeEdit">取消</Button>
+        <Button type="primary" :loading="editLoading" @click="save">保存</Button>
       </div>
     </Modal>
   </div>
 </template>
 <script>
-import {page} from '@/api/moreco-rbac/user'
-
+import { apiPage, apiDetail, apiSave } from '@/api/moreco-rbac/user'
+import { apiTree as apiDeptTree } from '@/api/moreco-rbac/dept'
+import { apiList as apiRoleList } from '@/api/moreco-rbac/role'
 export default {
   data () {
     return {
@@ -47,33 +64,43 @@ export default {
       columns: [
         {
           title: '用户名',
-          key: 'name',
+          key: 'username',
           fixed: 'left'
         },
         {
+          title: '真实姓名',
+          key: 'realName'
+        },
+        {
           title: '所属部门',
-          key: 'perms'
+          key: 'deptName'
         },
         {
           title: '邮箱',
-          key: 'icon'
+          key: 'email'
         },
         {
           title: '手机号',
-          key: 'type'
+          key: 'mobile'
         },
         {
           title: '状态',
-          key: 'orderNum'
+          key: 'status',
+          render: (h, params) => {
+            return h('div', null, params.row.dataMap.status)
+          }
         },
         {
           title: '创建时间',
-          key: 'url'
+          key: 'createdDate',
+          render: (h, params) => {
+            return h('div', null, params.row.dataMap.createdDate)
+          }
         },
         {
           title: '操作',
           key: 'action',
-          width: 200,
+          width: 180,
           align: 'center',
           fixed: 'right',
           render: (h, params) => {
@@ -88,21 +115,10 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.edit(params.id)
+                    this.openEdit(params.row.id)
                   }
                 }
-              }, '修改'),
-              h('Button', {
-                props: {
-                  type: 'error',
-                  size: 'small'
-                },
-                on: {
-                  click: () => {
-                    this.remove(params.id)
-                  }
-                }
-              }, '删除')
+              }, '修改')
             ])
           }
         }
@@ -114,13 +130,16 @@ export default {
       totalCount: 0,
       // 编辑
       editShow: false,
-      editObj: {}
+      editLoading: false,
+      userObj: {},
+      userDepts: [],
+      roles: []
     }
   },
   methods: {
     // 表格查询
     doQuery () {
-      page(this.currPage).then(res => {
+      apiPage(this.currPage).then(res => {
         if (res.data.code === 0) {
           this.currPage = res.data.result.currPage
           this.pageSize = res.data.result.pageSize
@@ -132,18 +151,73 @@ export default {
       })
     },
     // 编辑
-    edit (id) {
-      console.log(id)
+    openEdit (id) {
+      if (id !== null) {
+        apiDetail(id).then(res => {
+          if (res.data.code === 0) {
+            this.userObj = res.data.result
+          }
+        }).then(this.permInit)
+      } else {
+        this.userObj = {}
+        this.permInit()
+      }
       this.editShow = true
     },
-    remove (index) {
-      this.data6.splice(index, 1)
+    // 关闭编辑
+    closeEdit () {
+      this.editShow = false
+      this.editLoading = false
     },
-    ok () {
-      this.$Message.info('Clicked ok')
+    // 保存
+    save () {
+      this.editLoading = true
+      let depts = this.$refs.userDeptTree.getSelectedNodes()
+      if (depts !== null && depts.length > 0) {
+        this.userObj.deptId = depts[0].id
+      }
+      apiSave(this.userObj).then(res => {
+        if (res.data.code === 0) {
+          this.editShow = false
+          this.doQuery()
+        }
+      }).finally(() => {
+        this.editLoading = false
+      })
     },
-    cancel () {
-      this.$Message.info('Clicked cancel')
+    // 授权初始化
+    permInit () {
+      apiDeptTree().then(res => {
+        if (res.data.code === 0) {
+          this.userDepts = this.convert2DeptTree(res.data.result)
+        }
+      })
+      apiRoleList().then(res => {
+        if (res.data.code === 0) {
+          this.roles = res.data.result
+        }
+      })
+    },
+    // 转换成树形数据
+    convert2DeptTree (depts) {
+      let deptTree = []
+      for (let i in depts) {
+        let item = depts[i]
+        let dept = {}
+        dept.id = item.id
+        dept.title = item.name
+        if (this.userObj.deptId != null) {
+          dept.selected = (this.userObj.deptId === item.id)
+          if (dept.selected) {
+            dept.expand = true
+          }
+        }
+        if (item.children !== null) {
+          dept.children = this.convert2DeptTree(item.children)
+        }
+        deptTree.push(dept)
+      }
+      return deptTree
     }
   },
   mounted () {

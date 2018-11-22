@@ -5,19 +5,19 @@
   <div>
     <div style="margin-top: 20px">
       <Card>
-        <Button type="primary" icon="ios-search" @click="openEdit(null)">新增</Button>
+        <Button type="primary" icon="md-add" @click="openEdit(null)">新增</Button>
       </Card>
       <!--表格-->
       <Card>
         <p slot="title">#角色列表</p>
-        <div class="table-page-footer">
+        <div class="moreco-table">
           <Table border stripe :columns="columns" :data="pageData"></Table>
         </div>
         <Page :current="currPage" :page-size="pageSize" :total="totalCount" size="small" show-sizer></Page>
       </Card>
     </div>
     <!--修改-->
-    <Modal v-model="editShow" title="编辑角色" @on-ok="save()">
+    <Modal v-model="editShow" title="编辑角色">
       <Form :model="roleObj" :label-width="60">
         <FormItem label="id" hidden>
           <Input v-model="roleObj.id"></Input>
@@ -28,24 +28,19 @@
         <FormItem label="备注">
           <Input v-model="roleObj.remark" placeholder="请输入备注"></Input>
         </FormItem>
-        <Row>
-          <Col span="12">
-            <div>目录权限</div>
-            <Tree :data="roleMenus" show-checkbox ref="roleMenuTree"></Tree>
-          </Col>
-          <Col span="12">
-            <div>数据权限</div>
-            <Tree :data="roleDepts" show-checkbox ref="roleDeptTree"></Tree>
-          </Col>
-        </Row>
+        <div>目录权限</div>
+        <Tree :data="roleMenus" show-checkbox ref="roleMenuTree"></Tree>
       </Form>
+      <div slot="footer">
+        <Button @click="closeEdit">取消</Button>
+        <Button type="primary" :loading="editLoading" @click="save">保存</Button>
+      </div>
     </Modal>
   </div>
 </template>
 <script>
-import { page, detail, save, del } from '@/api/moreco-rbac/role'
-import { menuTree } from '@/api/moreco-rbac/menu'
-import { deptTree } from '@/api/moreco-rbac/dept'
+import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco-rbac/role'
+import { apiTree as apiMenuTree } from '@/api/moreco-rbac/menu'
 export default {
   data () {
     return {
@@ -111,39 +106,45 @@ export default {
       totalCount: 0,
       // 编辑
       editShow: false,
+      editLoading: false,
       roleObj: {},
-      roleMenus: [],
-      roleDepts: []
+      roleMenus: []
     }
   },
   methods: {
     // 表格查询
     doQuery () {
-      page(this.currPage).then(res => {
+      apiPage(this.currPage).then(res => {
         if (res.data.code === 0) {
           this.currPage = res.data.result.currPage
           this.pageSize = res.data.result.pageSize
           this.totalCount = res.data.result.totalCount
           this.pageData = res.data.result.list
         }
-      }).catch(err => {
-        console.log(err)
       })
     },
     // 打开编辑
     openEdit (id) {
       if (id !== null) {
-        detail(id).then(res => {
+        apiDetail(id).then(res => {
           if (res.data.code === 0) {
             this.roleObj = res.data.result
           }
         }).then(this.permInit)
+      } else {
+        this.roleObj = {}
+        this.permInit()
       }
       this.editShow = true
     },
+    // 关闭编辑
+    closeEdit () {
+      this.editShow = false
+      this.editLoading = false
+    },
     // 删除
     remove (id) {
-      del(id).then(res => {
+      apiDelete(id).then(res => {
         if (res.data.code === 0) {
           this.doQuery()
         }
@@ -151,66 +152,45 @@ export default {
     },
     // 保存
     save () {
-      var menuNodes = this.$refs.roleMenuTree.getCheckedNodes()
-      var deptNodes = this.$refs.roleDeptTree.getCheckedNodes()
-      var menuIdList = []
-      var deptIdList = []
-      for (var i in menuNodes) {
+      this.editLoading = true
+      let menuNodes = this.$refs.roleMenuTree.getCheckedNodes()
+      let menuIdList = []
+      for (let i in menuNodes) {
         menuIdList.push(menuNodes[i].id)
       }
-      for (var j in deptNodes) {
-        deptIdList.push(deptNodes[j].id)
-      }
       this.roleObj.menuIdList = menuIdList
-      this.roleObj.deptIdList = deptIdList
-      save(this.roleObj).then(res => {
+      apiSave(this.roleObj).then(res => {
         if (res.data.code === 0) {
+          this.editShow = false
           this.doQuery()
         }
+      }).finally(() => {
+        this.editLoading = false
       })
     },
-    // 授权拼接
+    // 授权初始化
     permInit () {
-      menuTree().then(res => {
+      apiMenuTree().then(res => {
         if (res.data.code === 0) {
           this.roleMenus = this.convert2MenuTree(res.data.result)
-        }
-      })
-      deptTree().then(res => {
-        if (res.data.code === 0) {
-          this.roleDepts = this.convert2DeptTree(res.data.result)
         }
       })
     },
     // 转换成树形数据
     convert2MenuTree (menus) {
-      var menuTree = []
-      for (var i in menus) {
-        var item = menus[i]
-        var menu = {}
+      let menuTree = []
+      for (let i in menus) {
+        let item = menus[i]
+        let menu = {}
         menu.id = item.id
         menu.title = item.name
-        menu.expand = false
-        menu.checked = (this.roleObj.menuIdList.indexOf(item.id) > -1)
+        if (this.roleObj.menuIdList != null) {
+          menu.checked = (this.roleObj.menuIdList.indexOf(item.id) > -1)
+        }
         menu.children = this.convert2MenuTree(item.children)
         menuTree.push(menu)
       }
       return menuTree
-    },
-    // 转换成树形数据
-    convert2DeptTree (depts) {
-      var deptTree = []
-      for (var i in depts) {
-        var item = depts[i]
-        var dept = {}
-        dept.id = item.id
-        dept.title = item.name
-        dept.expand = false
-        dept.checked = this.roleObj.deptIdList.indexOf(item.id) > -1
-        dept.children = this.convert2DeptTree(item.children)
-        deptTree.push(dept)
-      }
-      return deptTree
     }
   },
   mounted () {

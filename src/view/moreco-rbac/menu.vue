@@ -11,14 +11,14 @@
       <!--表格-->
       <Card>
         <p slot="title">#目录列表</p>
-        <div class="table-page-footer">
+        <div class="moreco-table">
           <Table border stripe :columns="columns" :data="pageData"></Table>
         </div>
         <Page :current="currPage" :page-size="pageSize" :total="totalCount" size="small" show-sizer></Page>
       </Card>
     </div>
     <!--修改-->
-    <Modal v-model="editShow" title="编辑目录" @on-ok="save">
+    <Modal v-model="editShow" title="编辑目录">
       <Form :model="menuObj" :label-width="60">
         <FormItem label="id" hidden>
           <Input v-model="menuObj.id"></Input>
@@ -50,11 +50,15 @@
           <Input v-model="menuObj.perms" placeholder="请输入授权标识"></Input>
         </FormItem>
       </Form>
+      <div slot="footer">
+        <Button @click="closeEdit">取消</Button>
+        <Button type="primary" :loading="editLoading" @click="save">保存</Button>
+      </div>
     </Modal>
   </div>
 </template>
 <script>
-import { page, toPage, detail, save, del } from '@/api/moreco-rbac/menu'
+import { apiPage, apiToPage, apiDetail, apiSave, apiDelete } from '@/api/moreco-rbac/menu'
 export default {
   data () {
     return {
@@ -156,6 +160,7 @@ export default {
       totalCount: 0,
       // 编辑
       editShow: false,
+      editLoading: false,
       menuObj: {},
       parentId: 0,
       parentName: '顶级目录',
@@ -167,7 +172,7 @@ export default {
   methods: {
     // 页面初始化
     initPage () {
-      toPage().then(res => {
+      apiToPage().then(res => {
         if (res.data.code === 0) {
           this.menuTypes = res.data.result.menuTypes
         }
@@ -175,7 +180,7 @@ export default {
     },
     // 表格查询
     doQuery () {
-      page(this.parentId, this.currPage).then(res => {
+      apiPage(this.parentId, this.currPage).then(res => {
         if (res.data.code === 0) {
           this.currPage = res.data.result.currPage
           this.pageSize = res.data.result.pageSize
@@ -187,28 +192,40 @@ export default {
     // 打开编辑
     openEdit (id) {
       if (id !== null) {
-        detail(id).then(res => {
+        apiDetail(id).then(res => {
           if (res.data.code === 0) {
             this.menuObj = res.data.result
           }
         })
+      } else {
+        this.menuObj = {}
       }
       this.editShow = true
     },
+    // 关闭编辑
+    closeEdit () {
+      this.editShow = false
+      this.editLoading = false
+    },
     // 保存
     save () {
+      this.editLoading = true
       if (this.menuObj.parentId === 'undefined') {
         this.menuObj.parentId = this.parentId
       }
-      save(this.menuObj).then(res => {
+      apiSave(this.menuObj).then(res => {
+        this.editLoading = false
+        this.editShow = false
         if (res.data.code === 0) {
           this.doQuery()
         }
+      }).finally(() => {
+        this.editLoading = false
       })
     },
     // 删除
     remove (id) {
-      del(id).then(res => {
+      apiDelete(id).then(res => {
         if (res.data.code === 0) {
           this.doQuery()
         }

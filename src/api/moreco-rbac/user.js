@@ -1,20 +1,20 @@
 import axios from '@/libs/api.request'
 
-export const page = (parentId, index) => {
+export const apiPage = (index) => {
   return axios.request({
-    url: 'rbac/user/page/' + parentId + '/' + index,
+    url: 'rbac/user/page/' + index,
     method: 'GET'
   })
 }
 
-export const detail = (id) => {
+export const apiDetail = (id) => {
   return axios.request({
     url: 'rbac/user/detail/' + id,
     method: 'GET'
   })
 }
 
-export const save = (menuObj) => {
+export const apiSave = (menuObj) => {
   return axios.request({
     url: 'rbac/user/save',
     method: 'POST',
@@ -22,7 +22,7 @@ export const save = (menuObj) => {
   })
 }
 
-export const del = (id) => {
+export const apiDelete = (id) => {
   return axios.request({
     url: 'rbac/user/delete/' + id,
     method: 'DELETE'
