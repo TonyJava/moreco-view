@@ -6,7 +6,16 @@ export default {
   rbac_menu: '目录管理',
   rbac_dept: '组织机构',
   rbac_role: '角色管理',
-  rbac_user: '用户管理'
+  rbac_user: '用户管理',
+  monitor: '监控报警',
+  server_list: '服务器列表',
+  project_list: '项目列表',
+  app_list: '应用列表',
+  instance_list: '实例列表',
+  method_monitor: '方法监控',
+  site_monitor: '站点监控',
+  alarm_self: '自定义报警',
+  alarm_list: '报警记录'
   // components: '组件',
   // count_to_page: '数字渐变',
   // tables_page: '多功能表格',

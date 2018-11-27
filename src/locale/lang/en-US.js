@@ -6,7 +6,10 @@ export default {
   rbac_menu: 'Menu',
   rbac_dept: 'Department',
   rbac_role: 'Role',
-  rbac_user: 'User'
+  rbac_user: 'User',
+  monitor: 'Project Monitor',
+  project_list: 'Project List',
+  project_detail: 'Project Detail'
   // 以下未知
   // components: 'Components',
   // count_to_page: 'Count-to',

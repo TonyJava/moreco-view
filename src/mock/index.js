@@ -10,6 +10,10 @@ import {page as deptPage, detail as deptDetail, tree as deptTree} from './rbac/d
 import {page as rolePage, detail as roleDetail, list as roleList} from './rbac/role'
 import {page as userPage, detail as userDetail} from './rbac/user'
 
+// monitor
+import {page as serverPage} from './monitor/server-list'
+import {page as projectPage} from './monitor/project-list'
+
 // 配置Ajax请求延时，可用来测试网络延迟大时项目中一些效果
 Mock.setup({
   timeout: 1000
@@ -56,5 +60,11 @@ Mock.mock(/\/rbac\/user\/page\/1/, userPage)
 Mock.mock(/\/rbac\/user\/detail\/1/, userDetail)
 Mock.mock(/\/rbac\/user\/save/, rbacSave)
 Mock.mock(/\/rbac\/user\/delete/, rbacDelete)
+
+// monitor
+// monitor--server-list
+Mock.mock(/\/monitor\/server\/page\/1/, serverPage)
+// monitor--project-list
+Mock.mock(/\/monitor\/project\/page\/1/, projectPage)
 
 export default Mock
