@@ -1,9 +1,10 @@
 import axios from '@/libs/api.request'
 
-export const apiPage = (parentId, index) => {
+export const apiPage = (index, params) => {
   return axios.request({
-    url: 'rbac/dept/page/' + parentId + '/' + index,
-    method: 'GET'
+    url: 'rbac/dept/page/' + index,
+    method: 'GET',
+    params: params
   })
 }
 

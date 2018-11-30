@@ -117,6 +117,8 @@ export default {
       currPage: 1,
       pageSize: 10,
       totalCount: 0,
+      // 查询
+      queryObj: {},
       // 编辑
       editShow: false,
       editLoading: false,
@@ -131,7 +133,8 @@ export default {
   methods: {
     // 表格查询
     doQuery () {
-      apiPage(this.parentId, this.currPage).then(res => {
+      this.queryObj.parentId = this.parentId
+      apiPage(this.currPage, this.queryObj).then(res => {
         if (res.data.code === 0) {
           this.currPage = res.data.result.currPage
           this.pageSize = res.data.result.pageSize

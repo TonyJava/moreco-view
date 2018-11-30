@@ -3,6 +3,38 @@
 </style>
 <template>
   <div>
+    <Card>
+      <Form :model="queryObj" :label-width="80" class="query-form">
+        <Row>
+          <Col span="8">
+            <FormItem label="用户名">
+              <Input v-model="queryObj.username" placeholder="请输入用户名"></Input>
+            </FormItem>
+          </Col>
+          <Col span="8">
+            <FormItem label="真实姓名">
+              <Input v-model="queryObj.realName" placeholder="请输入真实姓名"></Input>
+            </FormItem>
+          </Col>
+          <Col span="8">
+            <FormItem label="邮箱">
+              <Input v-model="queryObj.email" placeholder="请输入邮箱"></Input>
+            </FormItem>
+          </Col>
+        </Row>
+        <Row>
+          <Col span="8">
+            <FormItem label="电话">
+              <Input v-model="queryObj.mobile" placeholder="请输入电话"></Input>
+            </FormItem>
+          </Col>
+        </Row>
+      </Form>
+      <div class="query-btns">
+        <Button type="primary" icon="md-search" @click="doQuery">查询</Button>
+        <Button icon="md-refresh" @click="resetQuery">重置</Button>
+      </div>
+    </Card>
     <div style="margin-top: 20px">
       <Card>
         <Button type="primary" icon="md-add" @click="openEdit(null)">新增</Button>
@@ -128,6 +160,8 @@ export default {
       currPage: 1,
       pageSize: 10,
       totalCount: 0,
+      // 查询
+      queryObj: {},
       // 编辑
       editShow: false,
       editLoading: false,
@@ -139,7 +173,7 @@ export default {
   methods: {
     // 表格查询
     doQuery () {
-      apiPage(this.currPage).then(res => {
+      apiPage(this.currPage, this.queryObj).then(res => {
         if (res.data.code === 0) {
           this.currPage = res.data.result.currPage
           this.pageSize = res.data.result.pageSize
@@ -149,6 +183,10 @@ export default {
       }).catch(err => {
         console.log(err)
       })
+    },
+    // reset
+    resetQuery () {
+      this.queryObj = {}
     },
     // 编辑
     openEdit (id) {

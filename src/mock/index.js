@@ -35,7 +35,7 @@ Mock.mock(/\/message\/restore/, restoreTrash)
 
 // rbac
 // rbac--menu
-Mock.mock(/\/rbac\/menu\/page\/0\/1/, menuPage)
+Mock.mock(/\/rbac\/menu\/page\/1/, menuPage)
 Mock.mock(/\/rbac\/menu\/page\/[1-9]\/1/, rbacPageNull)
 Mock.mock(/\/rbac\/menu\/toPage/, menuToPage)
 Mock.mock(/\/rbac\/menu\/detail\/1/, menuDetail)
@@ -43,7 +43,7 @@ Mock.mock(/\/rbac\/menu\/tree/, menuTree)
 Mock.mock(/\/rbac\/menu\/save/, rbacSave)
 Mock.mock(/\/rbac\/menu\/delete/, rbacDelete)
 // rbac--dept
-Mock.mock(/\/rbac\/dept\/page\/0\/1/, deptPage)
+Mock.mock(/\/rbac\/dept\/page\/1/, deptPage)
 Mock.mock(/\/rbac\/dept\/page\/[1-9]\/1/, rbacPageNull)
 Mock.mock(/\/rbac\/dept\/detail\/1/, deptDetail)
 Mock.mock(/\/rbac\/dept\/tree/, deptTree)

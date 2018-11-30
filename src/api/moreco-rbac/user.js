@@ -1,9 +1,10 @@
 import axios from '@/libs/api.request'
 
-export const apiPage = (index) => {
+export const apiPage = (index, params) => {
   return axios.request({
     url: 'rbac/user/page/' + index,
-    method: 'GET'
+    method: 'GET',
+    params: params
   })
 }
 
