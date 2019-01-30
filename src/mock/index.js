@@ -1,23 +1,23 @@
 import Mock from 'mockjs'
-import { login, logout, getUserInfo } from './login'
-import { getTableData, getDragList, uploadImage } from './data'
-import { getMessageInit, getContentByMsgId, hasRead, removeReaded, restoreTrash } from './user'
+import {logout, getUserInfo} from './login'
+import {getTableData, getDragList, uploadImage} from './data'
+import {getMessageInit, getContentByMsgId, hasRead, removeReaded, restoreTrash} from './user'
 
 // rbac
-import { save as rbacSave, del as rbacDelete, pageNull as rbacPageNull } from './moreco/rbac/common'
-import { page as resourcePage, detail as resourceDetail } from './moreco/rbac/resource'
-import { page as menuPage, toPage as menuToPage, detail as menuDetail, tree as menuTree } from './moreco/rbac/menu'
-import { page as deptPage, detail as deptDetail, tree as deptTree } from './moreco/rbac/dept'
-import { page as rolePage, detail as roleDetail, list as roleList } from './moreco/rbac/role'
-import { page as userPage, detail as userDetail } from './moreco/rbac/user'
+import {save as rbacSave, del as rbacDelete} from './moreco/rbac/common'
+import {page as resourcePage, detail as resourceDetail} from './moreco/rbac/resource'
+import {page as menuPage, toPage as menuToPage, detail as menuDetail, tree as menuTree} from './moreco/rbac/menu'
+import {page as deptPage, detail as deptDetail, tree as deptTree} from './moreco/rbac/dept'
+import {page as rolePage, detail as roleDetail, list as roleList} from './moreco/rbac/role'
+import {page as userPage, detail as userDetail} from './moreco/rbac/user'
 
 // 配置Ajax请求延时，可用来测试网络延迟大时项目中一些效果
 Mock.setup({
   timeout: 1000
 })
 
-// 登录相关和获取用户信息
-Mock.mock(/\/login/, login)
+// // 登录相关和获取用户信息
+// // Mock.mock(/\/login/, login)
 Mock.mock(/\/get_info/, getUserInfo)
 Mock.mock(/\/logout/, logout)
 Mock.mock(/\/get_table_data/, getTableData)

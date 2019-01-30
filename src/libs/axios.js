@@ -1,23 +1,27 @@
 import axios from 'axios'
-import store from '@/store'
+import qs from 'qs'
+// import store from '@/store'
 // import { Spin } from 'iview'
-import { Message } from 'iview'
-const addErrorLog = errorInfo => {
-  const { statusText, status, request: { responseURL } } = errorInfo
-  let info = {
-    type: 'ajax',
-    code: status,
-    mes: statusText,
-    url: responseURL
-  }
-  if (!responseURL.includes('save_error_logger')) store.dispatch('addErrorLog', info)
-}
+// import {Message} from 'iview'
+import {setToken, getToken} from '@/libs/util'
+
+// const addErrorLog = errorInfo => {
+//   const {statusText, status, request: {responseURL}} = errorInfo
+//   let info = {
+//     type: 'ajax',
+//     code: status,
+//     mes: statusText,
+//     url: responseURL
+//   }
+//   if (!responseURL.includes('save_error_logger')) store.dispatch('addErrorLog', info)
+// }
 
 class HttpRequest {
   constructor (baseUrl = baseURL) {
     this.baseUrl = baseUrl
     this.queue = {}
   }
+
   getInsideConfig () {
     const config = {
       baseURL: this.baseUrl,
@@ -27,20 +31,29 @@ class HttpRequest {
     }
     return config
   }
+
   destroy (url) {
     delete this.queue[url]
     if (!Object.keys(this.queue).length) {
       // Spin.hide()
     }
   }
+
   interceptors (instance, url) {
     // 请求拦截
     instance.interceptors.request.use(config => {
       // 拦截delete 操作
-      var requestMethod = config.method
+      let requestMethod = config.method
       if (requestMethod.toUpperCase() === 'DELETE') {
         config.method = 'POST'
-        config.params = { '_method': requestMethod }
+        config.params = {'_method': requestMethod}
+      }
+      if (config.method.toUpperCase() === 'POST') {
+        config.data = qs.stringify(config.data)
+      }
+      let token = getToken()
+      if (token !== null || token !== undefined) {
+        config.headers.Authorization = 'Bearer ' + token
       }
       // 添加全局的loading...
       if (!Object.keys(this.queue).length) {
@@ -53,19 +66,21 @@ class HttpRequest {
     })
     // 响应拦截
     instance.interceptors.response.use(res => {
+      let authorization = res.headers.authorization
+      if (authorization !== null && authorization !== undefined) {
+        setToken(authorization)
+      }
       this.destroy(url)
-      const { data, status } = res
-      return { data, status }
+      const {data, status} = res
+      return {data, status}
     }, error => {
       this.destroy(url)
-      if (error.response.data.code !== 0) {
-        let msg = error.response.data.msg === null ? '未知错误' : error.response.data.msg
-        Message.error(msg)
-      }
-      addErrorLog(error.response)
+      // console.log(error.response)
+      // addErrorLog(error.response)
       return Promise.reject(error)
     })
   }
+
   request (options) {
     const instance = axios.create()
     options = Object.assign(this.getInsideConfig(), options)
@@ -73,4 +88,5 @@ class HttpRequest {
     return instance(options)
   }
 }
+
 export default HttpRequest

@@ -8,7 +8,7 @@ export default {
   rbac_role: 'Role',
   rbac_user: 'User',
   monitor: 'Project Monitor',
-  project_list: 'Project List',
+  appGroup_list: 'App Group List',
   project_detail: 'Project Detail'
   // 以下未知
   // components: 'Components',
