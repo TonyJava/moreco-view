@@ -1,37 +1,38 @@
 import axios from '@/libs/api.request'
 
-export const apiPage = (parentId) => {
+export const apiPage = (params) => {
   return axios.request({
-    url: 'rbac/role/page/' + parentId,
-    method: 'GET'
+    url: 'rbac/resource/page/',
+    method: 'GET',
+    params: params
   })
 }
 
 export const apiList = () => {
   return axios.request({
-    url: 'rbac/role/list',
+    url: 'rbac/resource/list',
     method: 'GET'
   })
 }
 
 export const apiDetail = (id) => {
   return axios.request({
-    url: 'rbac/role/detail/' + id,
+    url: 'rbac/resource/detail/' + id,
     method: 'GET'
   })
 }
 
-export const apiSave = (menuObj) => {
+export const apiSave = (temp) => {
   return axios.request({
-    url: 'rbac/role/save',
+    url: 'rbac/resource/save',
     method: 'POST',
-    data: menuObj
+    data: temp
   })
 }
 
 export const apiDelete = (id) => {
   return axios.request({
-    url: 'rbac/role/delete/' + id,
+    url: 'rbac/resource/delete/' + id,
     method: 'DELETE'
   })
 }

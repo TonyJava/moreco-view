@@ -40,7 +40,7 @@ class HttpRequest {
       var requestMethod = config.method
       if (requestMethod.toUpperCase() === 'DELETE') {
         config.method = 'POST'
-        config.params = {'_method': requestMethod}
+        config.params = { '_method': requestMethod }
       }
       // 添加全局的loading...
       if (!Object.keys(this.queue).length) {

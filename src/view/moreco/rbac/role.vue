@@ -1,32 +1,43 @@
 <style lang="less">
-  @import '../../components/moreco/moreco.less';
+  @import '../../../components/moreco/moreco.less';
 </style>
 <template>
   <div>
     <div style="margin-top: 20px">
       <Card>
-        <Button type="primary" icon="md-add" @click="openEdit(null)">新增</Button>
-      </Card>
-      <!--表格-->
-      <Card>
-        <p slot="title">#角色列表</p>
+        <p slot="title">#角色管理</p>
+        <!--查询-->
+        <Row>
+          <Form :label-width="60" inline :model="listQuery">
+            <FormItem label="名称">
+              <Input type="text" v-model="listQuery.name" placeholder="角色名称">
+              </Input>
+            </FormItem>
+            <Button type="primary" @click="doQuery()">查询</Button>
+          </Form>
+        </Row>
+        <Row class="moreco-table-options">
+          <Button type="primary" icon="md-add" @click="openEdit(null)">新增</Button>
+        </Row>
+        <!--表格-->
         <div class="moreco-table">
           <Table border stripe :columns="columns" :data="pageData"></Table>
         </div>
-        <Page :current="currPage" :page-size="pageSize" :total="totalCount" size="small" show-sizer></Page>
+        <Page :current="listQuery.currentPage" :page-size="listQuery.pageSize" :total="totalCount" size="small"
+              show-sizer></Page>
       </Card>
     </div>
     <!--修改-->
     <Modal v-model="editShow" title="编辑角色">
-      <Form :model="roleObj" :label-width="60">
+      <Form :label-width="70" ref="editForm" :model="temp" :rules="rules">
         <FormItem label="id" hidden>
-          <Input v-model="roleObj.id"></Input>
+          <Input v-model="temp.id"></Input>
         </FormItem>
-        <FormItem label="名称">
-          <Input v-model="roleObj.name" placeholder="请输入名称"></Input>
+        <FormItem label="名称" prop="name">
+          <Input v-model="temp.name" placeholder="请输入名称"></Input>
         </FormItem>
-        <FormItem label="备注">
-          <Input v-model="roleObj.remark" placeholder="请输入备注"></Input>
+        <FormItem label="备注" prop="remark">
+          <Input v-model="temp.remark" placeholder="请输入备注"></Input>
         </FormItem>
         <div>目录权限</div>
         <Tree :data="roleMenus" show-checkbox ref="roleMenuTree"></Tree>
@@ -39,8 +50,8 @@
   </div>
 </template>
 <script>
-import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco-rbac/role'
-import { apiTree as apiMenuTree } from '@/api/moreco-rbac/menu'
+import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/rbac/role'
+import { apiTree as apiMenuTree } from '@/api/moreco/rbac/menu'
 export default {
   data () {
     return {
@@ -49,6 +60,7 @@ export default {
         {
           title: '名称',
           key: 'name',
+          width: 200,
           fixed: 'left'
         },
         {
@@ -99,25 +111,39 @@ export default {
           }
         }
       ],
+      // 表格查询
+      listQuery: {
+        currentPage: 1,
+        pageSize: 10,
+
+        name: undefined
+      },
       // 表格参数
       pageData: [],
-      currPage: 1,
-      pageSize: 10,
       totalCount: 0,
       // 编辑
       editShow: false,
       editLoading: false,
-      roleObj: {},
+      temp: {},
+      rules: {
+        name: [
+          {required: true, message: '名称为必填项', trigger: 'blur'},
+          {max: 255, message: '名称最多为255个字符', trigger: 'blur'}
+        ],
+        orderNum: [
+          {min: -99999, max: 99999, message: '排序只能是-99999~99999', trigger: 'blur'}
+        ]
+      },
       roleMenus: []
     }
   },
   methods: {
     // 表格查询
     doQuery () {
-      apiPage(this.currPage).then(res => {
+      apiPage(this.listQuery).then(res => {
         if (res.data.code === 0) {
-          this.currPage = res.data.result.currPage
-          this.pageSize = res.data.result.pageSize
+          this.listQuery.currentPage = res.data.result.currentPage
+          this.listQuery.pageSize = res.data.result.pageSize
           this.totalCount = res.data.result.totalCount
           this.pageData = res.data.result.list
         }
@@ -128,11 +154,11 @@ export default {
       if (id !== null) {
         apiDetail(id).then(res => {
           if (res.data.code === 0) {
-            this.roleObj = res.data.result
+            this.temp = res.data.result
           }
         }).then(this.permInit)
       } else {
-        this.roleObj = {}
+        this.temp = {}
         this.permInit()
       }
       this.editShow = true
@@ -153,19 +179,25 @@ export default {
     // 保存
     save () {
       this.editLoading = true
-      let menuNodes = this.$refs.roleMenuTree.getCheckedNodes()
-      let menuIdList = []
-      for (let i in menuNodes) {
-        menuIdList.push(menuNodes[i].id)
-      }
-      this.roleObj.menuIdList = menuIdList
-      apiSave(this.roleObj).then(res => {
-        if (res.data.code === 0) {
-          this.editShow = false
-          this.doQuery()
+      this.$refs['editForm'].validate((valid) => {
+        if (valid){
+          let menuNodes = this.$refs.roleMenuTree.getCheckedNodes()
+          let menuIdList = []
+          for (let i in menuNodes) {
+            menuIdList.push(menuNodes[i].id)
+          }
+          this.temp.menuIdList = menuIdList
+          apiSave(this.temp).then(res => {
+            if (res.data.code === 0) {
+              this.editShow = false
+              this.doQuery()
+            }
+          }).finally(() => {
+            this.editLoading = false
+          })
+        } else {
+          this.editLoading = false
         }
-      }).finally(() => {
-        this.editLoading = false
       })
     },
     // 授权初始化
@@ -184,8 +216,8 @@ export default {
         let menu = {}
         menu.id = item.id
         menu.title = item.name
-        if (this.roleObj.menuIdList != null) {
-          menu.checked = (this.roleObj.menuIdList.indexOf(item.id) > -1)
+        if (this.temp.menuIdList != null) {
+          menu.checked = (this.temp.menuIdList.indexOf(item.id) > -1)
         }
         menu.children = this.convert2MenuTree(item.children)
         menuTree.push(menu)

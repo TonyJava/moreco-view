@@ -1,38 +1,45 @@
 import axios from '@/libs/api.request'
 
-export const apiPage = (index, params) => {
+export const apiPage = (params) => {
   return axios.request({
-    url: 'rbac/dept/page/' + index,
+    url: 'rbac/menu/page/',
     method: 'GET',
     params: params
   })
 }
 
-export const apiTree = () => {
+export const apiToPage = () => {
   return axios.request({
-    url: 'rbac/dept/tree',
+    url: 'rbac/menu/toPage',
     method: 'GET'
   })
 }
 
 export const apiDetail = (id) => {
   return axios.request({
-    url: 'rbac/dept/detail/' + id,
+    url: 'rbac/menu/detail/' + id,
     method: 'GET'
   })
 }
 
-export const apiSave = (deptObj) => {
+export const apiSave = (temp) => {
   return axios.request({
-    url: 'rbac/dept/save',
+    url: 'rbac/menu/save',
     method: 'POST',
-    data: deptObj
+    data: temp
   })
 }
 
 export const apiDelete = (id) => {
   return axios.request({
-    url: 'rbac/dept/delete/' + id,
+    url: 'rbac/menu/delete/' + id,
     method: 'DELETE'
+  })
+}
+
+export const apiTree = () => {
+  return axios.request({
+    url: 'rbac/menu/tree',
+    method: 'GET'
   })
 }

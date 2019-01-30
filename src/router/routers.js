@@ -78,7 +78,7 @@ export default [
     ]
   },
   {
-    path: '/moreco-rbac',
+    path: '/moreco/rbac',
     name: 'rbac',
     meta: {
       icon: 'md-unlock',
@@ -87,13 +87,22 @@ export default [
     component: Main,
     children: [
       {
+        path: 'resource',
+        name: '资源管理',
+        meta: {
+          icon: 'md-cloud',
+          title: '资源管理'
+        },
+        component: () => import('@/view/moreco/rbac/resource.vue')
+      },
+      {
         path: 'menu',
         name: 'rbac_menu',
         meta: {
           icon: 'md-menu',
           title: 'rbac_menu'
         },
-        component: () => import('@/view/moreco-rbac/menu.vue')
+        component: () => import('@/view/moreco/rbac/menu.vue')
       },
       {
         path: 'dept',
@@ -102,7 +111,7 @@ export default [
           icon: 'md-home',
           title: 'rbac_dept'
         },
-        component: () => import('@/view/moreco-rbac/dept.vue')
+        component: () => import('@/view/moreco/rbac/dept.vue')
       },
       {
         path: 'role',
@@ -111,7 +120,7 @@ export default [
           icon: 'md-people',
           title: 'rbac_role'
         },
-        component: () => import('@/view/moreco-rbac/role.vue')
+        component: () => import('@/view/moreco/rbac/role.vue')
       },
       {
         path: 'user',
@@ -120,90 +129,7 @@ export default [
           icon: 'md-person',
           title: 'rbac_user'
         },
-        component: () => import('@/view/moreco-rbac/user.vue')
-      }
-    ]
-  },
-  {
-    path: '/moreco-monitor',
-    name: 'monitor',
-    meta: {
-      icon: 'md-speedometer',
-      title: 'monitor'
-    },
-    component: Main,
-    children: [
-      {
-        path: 'server-list',
-        name: 'server_list',
-        meta: {
-          icon: 'md-desktop',
-          title: 'server_list'
-        },
-        component: () => import('@/view/moreco-monitor/server-list.vue')
-      },
-      {
-        path: 'project-list',
-        name: 'project_list',
-        meta: {
-          icon: 'md-list-box',
-          title: 'project_list'
-        },
-        component: () => import('@/view/moreco-monitor/project-list.vue')
-      },
-      {
-        path: 'app-list',
-        name: 'app_list',
-        meta: {
-          icon: 'md-cube',
-          title: 'app_list'
-        },
-        component: () => import('@/view/moreco-monitor/app-list.vue')
-      },
-      {
-        path: 'instance-list',
-        name: 'instance_list',
-        meta: {
-          icon: 'ios-grid',
-          title: 'instance_list'
-        },
-        component: () => import('@/view/moreco-monitor/instance-list.vue')
-      },
-      {
-        path: 'method-monitor',
-        name: 'method_monitor',
-        meta: {
-          icon: 'md-analytics',
-          title: 'method_monitor'
-        },
-        component: () => import('@/view/moreco-monitor/method-monitor.vue')
-      },
-      {
-        path: 'site-monitor',
-        name: 'site_monitor',
-        meta: {
-          icon: 'md-globe',
-          title: 'site_monitor'
-        },
-        component: () => import('@/view/moreco-monitor/site-monitor.vue')
-      },
-      {
-        path: 'alarm-self',
-        name: 'alarm_self',
-        meta: {
-          icon: 'md-build',
-          title: 'alarm_self'
-        },
-        component: () => import('@/view/moreco-monitor/alarm-self.vue')
-      },
-      {
-        path: 'alarm-list',
-        name: 'alarm_list',
-        meta: {
-          icon: 'md-information-circle',
-          title: 'alarm_list'
-        },
-        component: () => import('@/view/moreco-monitor/alarm-list.vue')
+        component: () => import('@/view/moreco/rbac/user.vue')
       }
     ]
   },

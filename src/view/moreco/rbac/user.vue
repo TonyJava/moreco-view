@@ -1,80 +1,68 @@
 <style lang="less">
-  @import '../../components/moreco/moreco.less';
+  @import '../../../components/moreco/moreco.less';
 </style>
 <template>
   <div>
-    <Card>
-      <Form :model="queryObj" :label-width="80" class="query-form">
-        <Row>
-          <Col span="8">
-            <FormItem label="用户名">
-              <Input v-model="queryObj.username" placeholder="请输入用户名"></Input>
-            </FormItem>
-          </Col>
-          <Col span="8">
-            <FormItem label="真实姓名">
-              <Input v-model="queryObj.realName" placeholder="请输入真实姓名"></Input>
-            </FormItem>
-          </Col>
-          <Col span="8">
-            <FormItem label="邮箱">
-              <Input v-model="queryObj.email" placeholder="请输入邮箱"></Input>
-            </FormItem>
-          </Col>
-        </Row>
-        <Row>
-          <Col span="8">
-            <FormItem label="电话">
-              <Input v-model="queryObj.mobile" placeholder="请输入电话"></Input>
-            </FormItem>
-          </Col>
-        </Row>
-      </Form>
-      <div class="query-btns">
-        <Button type="primary" icon="md-search" @click="doQuery">查询</Button>
-        <Button icon="md-refresh" @click="resetQuery">重置</Button>
-      </div>
-    </Card>
     <div style="margin-top: 20px">
       <Card>
-        <Button type="primary" icon="md-add" @click="openEdit(null)">新增</Button>
-      </Card>
-      <!--表格-->
-      <Card>
-        <p slot="title">#用户列表</p>
+        <p slot="title">#用户管理</p>
+        <!--查询-->
+        <Row>
+          <Form :label-width="60" inline :model="listQuery">
+            <FormItem label="用户名">
+              <Input v-model="listQuery.username" placeholder="用户名"></Input>
+            </FormItem>
+            <FormItem label="真实姓名">
+              <Input v-model="listQuery.username" placeholder="真实姓名"></Input>
+            </FormItem>
+            <FormItem label="邮箱">
+              <Input v-model="listQuery.email" placeholder="邮箱"></Input>
+            </FormItem>
+            <FormItem label="电话">
+              <Input v-model="listQuery.mobile" placeholder="电话"></Input>
+            </FormItem>
+            <Button type="primary" @click="doQuery()">查询</Button>
+          </Form>
+        </Row>
+        <Row class="moreco-table-options">
+          <Button type="primary" icon="md-add" @click="openEdit(null)">新增</Button>
+        </Row>
+        <!--表格-->
         <div class="moreco-table">
           <Table border stripe :columns="columns" :data="pageData"></Table>
         </div>
-        <Page :current="currPage" :page-size="pageSize" :total="totalCount" size="small" show-sizer></Page>
+        <Page :current="listQuery.currentPage" :page-size="listQuery.pageSize" :total="totalCount" size="small"
+              show-sizer></Page>
       </Card>
     </div>
+
     <!--修改-->
     <Modal v-model="editShow" title="编辑用户">
-      <Form :model="userObj" :label-width="60">
+      <Form :label-width="70" ref="editForm" :model="temp" :rules="rules">
         <FormItem label="id" hidden>
-          <Input v-model="userObj.id"></Input>
+          <Input v-model="temp.id"></Input>
         </FormItem>
-        <FormItem label="用户名">
-          <Input v-model="userObj.username" :disabled="userObj.id !== null && userObj.id !== undefined" placeholder="请输入用户名"></Input>
+        <FormItem label="用户名" prop="username">
+          <Input v-model="temp.username" :disabled="temp.id !== null && temp.id !== undefined" placeholder="用户名"></Input>
         </FormItem>
-        <FormItem label="真实姓名">
-          <Input v-model="userObj.realName" placeholder="请输入真实姓名"></Input>
+        <FormItem label="真实姓名" prop="realName">
+          <Input v-model="temp.realName" placeholder="真实姓名"></Input>
         </FormItem>
-        <FormItem label="邮箱">
-          <Input v-model="userObj.email" placeholder="请输入邮箱"></Input>
+        <FormItem label="邮箱" prop="email">
+          <Input v-model="temp.email" placeholder="邮箱"></Input>
         </FormItem>
-        <FormItem label="电话">
-          <Input v-model="userObj.mobile" placeholder="请输入电话"></Input>
+        <FormItem label="电话" prop="mobile">
+          <Input v-model="temp.mobile" placeholder="电话"></Input>
         </FormItem>
-        <FormItem label="授权角色">
-          <Select v-model="userObj.roleIds" multiple filterable placeholder="请选择角色">
+        <FormItem label="授权角色" prop="roleIds">
+          <Select v-model="temp.roleIds" multiple filterable placeholder="请选择角色">
             <Option v-for="item in roles" :value="item.id"  :key="item.key">{{ item.name }}</Option>
           </Select>
         </FormItem>
         <FormItem label="所属部门" hidden>
-          <Input v-model="userObj.deptId"></Input>
+          <Input v-model="temp.deptId"></Input>
         </FormItem>
-        <FormItem label="所属部门">
+        <FormItem label="所属部门" prop="deptId">
           <Tree :data="userDepts" ref="userDeptTree"></Tree>
         </FormItem>
       </Form>
@@ -86,9 +74,9 @@
   </div>
 </template>
 <script>
-import { apiPage, apiDetail, apiSave } from '@/api/moreco-rbac/user'
-import { apiTree as apiDeptTree } from '@/api/moreco-rbac/dept'
-import { apiList as apiRoleList } from '@/api/moreco-rbac/role'
+import { apiPage, apiDetail, apiSave } from '@/api/moreco/rbac/user'
+import { apiTree as apiDeptTree } from '@/api/moreco/rbac/dept'
+import { apiList as apiRoleList } from '@/api/moreco/rbac/role'
 export default {
   data () {
     return {
@@ -97,6 +85,7 @@ export default {
         {
           title: '用户名',
           key: 'username',
+          width: 200,
           fixed: 'left'
         },
         {
@@ -155,17 +144,46 @@ export default {
           }
         }
       ],
+      // 表格查询
+      listQuery: {
+        currentPage: 1,
+        pageSize: 10,
+
+        username: undefined,
+        realName: undefined,
+        email: undefined,
+        mobile: undefined
+      },
       // 表格参数
       pageData: [],
-      currPage: 1,
-      pageSize: 10,
+
       totalCount: 0,
-      // 查询
-      queryObj: {},
       // 编辑
       editShow: false,
       editLoading: false,
-      userObj: {},
+      temp: {},
+      rules: {
+        username: [
+          {required: true, message: '用户名为必填项', trigger: 'blur'},
+          {max: 255, message: '用户名最多为255个字符', trigger: 'blur'}
+        ],
+        realName: [
+          {required: true, message: '真实姓名为必填', trigger: 'blur'},
+          {max: 255, message: '真实姓名最多为255个字符', trigger: 'blur'}
+        ],
+        email: [
+          {max: 255, message: '邮箱最多为255个字符', trigger: 'blur'}
+        ],
+        mobile: [
+          {max: 255, message: '电话最多为255个字符', trigger: 'blur'}
+        ],
+        roleIds: [
+          {required: true, message: '授权角色为必选', trigger: 'blur'}
+        ],
+        deptId: [
+          {required: true, message: '所属部门为必选', trigger: 'blur'}
+        ]
+      },
       userDepts: [],
       roles: []
     }
@@ -173,10 +191,10 @@ export default {
   methods: {
     // 表格查询
     doQuery () {
-      apiPage(this.currPage, this.queryObj).then(res => {
+      apiPage(this.listQuery).then(res => {
         if (res.data.code === 0) {
-          this.currPage = res.data.result.currPage
-          this.pageSize = res.data.result.pageSize
+          this.listQuery.currentPage = res.data.result.currentPage
+          this.listQuery.pageSize = res.data.result.pageSize
           this.totalCount = res.data.result.totalCount
           this.pageData = res.data.result.list
         }
@@ -186,18 +204,18 @@ export default {
     },
     // reset
     resetQuery () {
-      this.queryObj = {}
+      this.listQuery = {}
     },
     // 编辑
     openEdit (id) {
       if (id !== null) {
         apiDetail(id).then(res => {
           if (res.data.code === 0) {
-            this.userObj = res.data.result
+            this.temp = res.data.result
           }
         }).then(this.permInit)
       } else {
-        this.userObj = {}
+        this.temp = {}
         this.permInit()
       }
       this.editShow = true
@@ -210,17 +228,23 @@ export default {
     // 保存
     save () {
       this.editLoading = true
-      let depts = this.$refs.userDeptTree.getSelectedNodes()
-      if (depts !== null && depts.length > 0) {
-        this.userObj.deptId = depts[0].id
-      }
-      apiSave(this.userObj).then(res => {
-        if (res.data.code === 0) {
-          this.editShow = false
-          this.doQuery()
+      this.$refs['editForm'].validate((valid) => {
+        if (valid){
+          let depts = this.$refs.userDeptTree.getSelectedNodes()
+          if (depts !== null && depts.length > 0) {
+            this.temp.deptId = depts[0].id
+          }
+          apiSave(this.userObj).then(res => {
+            if (res.data.code === 0) {
+              this.editShow = false
+              this.doQuery()
+            }
+          }).finally(() => {
+            this.editLoading = false
+          })
+        } else {
+          this.editLoading = false
         }
-      }).finally(() => {
-        this.editLoading = false
       })
     },
     // 授权初始化
@@ -244,7 +268,7 @@ export default {
         let dept = {}
         dept.id = item.id
         dept.title = item.name
-        if (this.userObj.deptId != null) {
+        if (this.temp.deptId != null) {
           dept.selected = (this.userObj.deptId === item.id)
           if (dept.selected) {
             dept.expand = true
