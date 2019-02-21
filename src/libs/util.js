@@ -15,6 +15,19 @@ export const getToken = () => {
   else return false
 }
 
+export const MENUS_KEY = 'menus'
+
+export const setMenus = (menus) => {
+  const menusStr = menus === null ? null : JSON.stringify(menus)
+  localStorage.setItem(MENUS_KEY, menusStr)
+}
+
+export const getMenus = () => {
+  const menus = localStorage.getItem(MENUS_KEY)
+  if (menus) return JSON.parse(menus)
+  else return false
+}
+
 export const hasChild = (item) => {
   return item.children && item.children.length !== 0
 }

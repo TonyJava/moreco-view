@@ -8,7 +8,8 @@ import {
   removeReaded,
   restoreTrash
 } from '@/api/user.js'
-import { setToken, getToken } from '@/libs/util'
+import { setToken, getToken, setMenus } from '@/libs/util'
+import { apiPermissionMenuTree } from '@/api/moreco/component/rbac/menu'
 
 export default {
   state: {
@@ -76,8 +77,10 @@ export default {
           username,
           password
         }).then(res => {
-          // const data = res.data
-          // commit('setToken', data.token)
+          commit('setToken', res.token)
+          apiPermissionMenuTree().then(res => {
+            setMenus(res)
+          })
           resolve()
         }).catch(err => {
           reject(err)
@@ -90,6 +93,7 @@ export default {
         logout(state.token).then(() => {
           commit('setToken', '')
           commit('setAccess', [])
+          setMenus(null)
           resolve()
         }).catch(err => {
           reject(err)
@@ -105,7 +109,7 @@ export default {
       return new Promise((resolve, reject) => {
         try {
           getUserInfo(state.token).then(res => {
-            const data = res.data
+            const data = res
             commit('setAvator', data.avator)
             commit('setUserName', data.name)
             commit('setUserId', data.user_id)
@@ -124,7 +128,7 @@ export default {
     getMessageList ({ state, commit }) {
       return new Promise((resolve, reject) => {
         getMessage().then(res => {
-          const { unread, readed, trash } = res.data
+          const { unread, readed, trash } = res
           commit('setMessageUnreadList', unread.sort((a, b) => new Date(b.create_time) - new Date(a.create_time)))
           commit('setMessageReadedList', readed.map(_ => {
             _.loading = false
@@ -148,7 +152,7 @@ export default {
           resolve(contentItem)
         } else {
           getContentByMsgId(msg_id).then(res => {
-            const content = res.data
+            const content = res
             commit('updateMessageContentStore', { msg_id, content })
             resolve(content)
           })

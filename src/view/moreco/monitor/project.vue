@@ -37,7 +37,7 @@
   </div>
 </template>
 <script>
-import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/monitor/project-list'
+import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/monitor/project'
 export default {
   data () {
     return {

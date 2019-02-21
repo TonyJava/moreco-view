@@ -3,7 +3,7 @@ import qs from 'qs'
 // import store from '@/store'
 // import { Spin } from 'iview'
 // import {Message} from 'iview'
-import {setToken, getToken} from '@/libs/util'
+import { setToken, getToken } from '@/libs/util'
 
 // const addErrorLog = errorInfo => {
 //   const {statusText, status, request: {responseURL}} = errorInfo
@@ -46,11 +46,11 @@ class HttpRequest {
       let requestMethod = config.method
       if (requestMethod.toUpperCase() === 'DELETE') {
         config.method = 'POST'
-        config.params = {'_method': requestMethod}
+        config.params = { '_method': requestMethod }
       }
-      if (config.method.toUpperCase() === 'POST') {
-        config.data = qs.stringify(config.data)
-      }
+      // if (config.method.toUpperCase() === 'POST') {
+      //   config.data = qs.stringify(config.data)
+      // }
       let token = getToken()
       if (token !== null || token !== undefined) {
         config.headers.Authorization = 'Bearer ' + token
@@ -71,8 +71,10 @@ class HttpRequest {
         setToken(authorization)
       }
       this.destroy(url)
-      const {data, status} = res
-      return {data, status}
+      const { data, status } = res
+      if (status === 200 && data.success) {
+        return data.result
+      }
     }, error => {
       this.destroy(url)
       // console.log(error.response)
