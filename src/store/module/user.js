@@ -8,8 +8,14 @@ import {
   removeReaded,
   restoreTrash
 } from '@/api/user.js'
-import { setToken, getToken, setMenus } from '@/libs/util'
-import { apiPermissionMenuTree } from '@/api/moreco/component/rbac/menu'
+import { setToken, getToken } from '@/libs/util'
+
+import {apiPermissionMenuTree} from '@/api/moreco/component/rbac/menu'
+import {getPaths} from "../../libs/util";
+
+const MENUS_KEY = 'mcMenus'
+const PATHS_KEY = 'mcPaths'
+const COMPONENTS_KEY = 'mcComponents'
 
 export default {
   state: {
@@ -22,7 +28,11 @@ export default {
     messageUnreadList: [],
     messageReadedList: [],
     messageTrashList: [],
-    messageContentStore: {}
+    messageContentStore: {},
+    // 权限管理
+    mcMenus: [],
+    mcPaths: [],
+    mcComponents: {}
   },
   mutations: {
     setAvator (state, avatorPath) {
@@ -61,16 +71,32 @@ export default {
       const msgItem = state[from].splice(index, 1)[0]
       msgItem.loading = false
       state[to].unshift(msgItem)
-    }
+    },
+    // 权限管理
+    setMenus(state, menus) {
+      state.mcMenus = menus
+      localStorage.setItem(MENUS_KEY, JSON.stringify(menus))
+    },
+    setPaths(state, paths) {
+      state.mcPaths = paths
+      localStorage.setItem(PATHS_KEY, JSON.stringify(paths))
+    },
+    setComponents(state, components) {
+      state.mcComponents = components
+      localStorage.setItem(COMPONENTS_KEY, JSON.stringify(components))
+    },
   },
   getters: {
     messageUnreadCount: state => state.messageUnreadList.length,
     messageReadedCount: state => state.messageReadedList.length,
-    messageTrashCount: state => state.messageTrashList.length
+    messageTrashCount: state => state.messageTrashList.length,
+    getMenus: () => JSON.parse(localStorage.getItem(MENUS_KEY)),
+    getPaths: () => JSON.parse(localStorage.getItem(PATHS_KEY)),
+    components: () => JSON.parse(localStorage.getItem(COMPONENTS_KEY))
   },
   actions: {
     // 登录
-    handleLogin ({ commit }, { username, password }) {
+    handleLogin ({ state, commit }, { username, password }) {
       username = username.trim()
       return new Promise((resolve, reject) => {
         login({
@@ -78,8 +104,11 @@ export default {
           password
         }).then(res => {
           commit('setToken', res.token)
+          // 权限管理
           apiPermissionMenuTree().then(res => {
-            setMenus(res)
+            commit('setMenus', res)
+            let paths = buildPaths(null, state.mcMenus)
+            commit('setPaths', paths)
           })
           resolve()
         }).catch(err => {
@@ -93,15 +122,13 @@ export default {
         logout(state.token).then(() => {
           commit('setToken', '')
           commit('setAccess', [])
-          setMenus(null)
+          // 权限管理
+          commit('setMenus', null)
+          commit('setPaths', null)
           resolve()
         }).catch(err => {
           reject(err)
         })
-        // 如果你的退出登录无需请求接口，则可以直接使用下面三行代码而无需使用logout调用接口
-        // commit('setToken', '')
-        // commit('setAccess', [])
-        // resolve()
       })
     },
     // 获取用户相关信息
@@ -204,5 +231,25 @@ export default {
         })
       })
     }
+  }
+}
+
+function buildPaths(parentPath, menus) {
+  const paths = []
+  if (menus !== undefined && menus !== null && menus.length > 0) {
+    for (let i in menus) {
+      let menu = menus[i]
+      let path = null
+      if (parentPath !== null) {
+        path = parentPath + '/' + menu.url
+      } else {
+        path = menu.url
+      }
+      if (menu.children !== undefined && menu.children.length > 0) {
+        return buildPaths(path, menu.children)
+      }
+      paths.push(path)
+    }
+    return paths
   }
 }

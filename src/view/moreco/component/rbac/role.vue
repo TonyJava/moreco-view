@@ -129,9 +129,6 @@ export default {
         name: [
           { required: true, message: '名称为必填项', trigger: 'blur' },
           { max: 255, message: '名称最多为255个字符', trigger: 'blur' }
-        ],
-        orderNum: [
-          { min: -99999, max: 99999, message: '排序只能是-99999~99999', trigger: 'blur' }
         ]
       },
       roleMenus: []

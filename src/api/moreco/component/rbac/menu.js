@@ -51,12 +51,12 @@ export const apiPermissionMenuTree = () => {
   })
 }
 
-export const apiPermissionComponent = (menuPath) => {
+export const apiPermComponent = (matchedPaths) => {
   return axios.request({
     url: 'moreco/component/rbac/menu/permissionComponent',
     method: 'GET',
     params: {
-      menuPath: menuPath
+      matchedPaths: matchedPaths
     }
   })
 }

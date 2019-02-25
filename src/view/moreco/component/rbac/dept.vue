@@ -18,7 +18,7 @@
           </Form>
         </Row>
         <Row class="moreco-table-options">
-          <Button type="primary" icon="md-add" @click="openEdit(null)">新增</Button>&nbsp;&nbsp;
+          <Button type="primary" icon="md-add" @click="openEdit(null)" v-if="components.edit">新增</Button>&nbsp;&nbsp;
           <Button type="success" icon="ios-arrow-back" @click="goBack()" v-if="this.listQuery.parentId !== 0">返回上级
           </Button>
         </Row>
@@ -58,6 +58,7 @@
 </template>
 <script>
 import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/component/rbac/dept'
+import { mapGetters } from 'vuex'
 
 export default {
   data () {
@@ -104,7 +105,8 @@ export default {
                   size: 'small'
                 },
                 style: {
-                  marginRight: '5px'
+                  marginRight: '5px',
+                  display: (this.components.edit) ? '' : 'none'
                 },
                 on: {
                   click: () => {
@@ -146,9 +148,6 @@ export default {
         name: [
           { required: true, message: '名称为必填项', trigger: 'blur' },
           { max: 255, message: '名称最多为255个字符', trigger: 'blur' }
-        ],
-        orderNum: [
-          { min: -99999, max: 99999, message: '排序只能是-99999~99999', trigger: 'blur' }
         ]
       },
       parentIdStack: [],
@@ -217,6 +216,11 @@ export default {
   },
   mounted () {
     this.doQuery()
+  },
+  computed: {
+    ...mapGetters([
+      'components'
+    ])
   }
 }
 </script>

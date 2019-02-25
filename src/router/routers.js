@@ -1,6 +1,6 @@
 import Main from '@/components/main'
 import { moreco } from '@/router/reuters/moreco'
-import { getMenus } from '@/libs/util'
+import store from '@/store'
 
 /**
  * 获取系统常量目录
@@ -240,7 +240,8 @@ function menuTree () {
     let systemMenu = systemMenus[i]
     menus.push(systemMenu)
   }
-  let userMenus = getPermissionMenuListCycle(getMenus(), getConsts())
+  let authMenus = store.getters.getMenus
+  let userMenus = getPermissionMenuListCycle(authMenus, getConsts())
   for (let i in userMenus) {
     let userMenu = userMenus[i]
     menus.push(userMenu)

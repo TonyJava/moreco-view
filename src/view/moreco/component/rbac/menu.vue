@@ -43,9 +43,6 @@
         <FormItem label="名称" prop="name">
           <Input v-model="temp.name" placeholder="请输入名称"></Input>
         </FormItem>
-        <FormItem label="图标" prop="icon">
-          <Input v-model="temp.icon" placeholder="请输入图标"></Input>
-        </FormItem>
         <FormItem label="类型" prop="type">
           <Select v-model="temp.type" style="width:200px">
             <Option v-for="item in menuTypes" :value="item.key" aria-selected="temp.type === item.key" :key="item.key">{{ item.name }}</Option>
@@ -54,7 +51,10 @@
         <FormItem label="路由" prop="url">
           <Input v-model="temp.url" placeholder="请输入路由"></Input>
         </FormItem>
-        <FormItem label="是否显示" prop="show">
+        <FormItem label="图标" prop="icon" v-if="temp.type !== 2">
+          <Input v-model="temp.icon" placeholder="请输入图标"></Input>
+        </FormItem>
+        <FormItem label="是否显示" prop="show" v-if="temp.type !== 2">
           <i-switch v-model="temp.visible" trueValue="1" false-value="0">
             <span slot="open">是</span>
             <span slot="close">否</span>
@@ -260,9 +260,6 @@ export default {
         ],
         remark: [
           { max: 255, message: '备注最多为255个字符', trigger: 'blur' }
-        ],
-        orderNum: [
-          { min: -99999, max: 99999, message: '排序只能是-99999~99999', trigger: 'blur' }
         ]
       },
       parentIdStack: [],
