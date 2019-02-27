@@ -9,7 +9,7 @@ export default {
   rbac_user: '用户管理',
   monitor: '监控报警',
   server_list: '服务器列表',
-  project_list: '项目列表',
+  appGroup_list: '应用分组列表',
   app_list: '应用列表',
   instance_list: '实例列表',
   method_monitor: '方法监控',

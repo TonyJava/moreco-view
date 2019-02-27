@@ -3,20 +3,24 @@ import Router from 'vue-router'
 import routes from './routers'
 import store from '@/store'
 import iView from 'iview'
-import { setToken, getToken, canTurnTo } from '@/libs/util'
+import {setToken, getToken, canTurnTo} from '@/libs/util'
 import config from '@/config'
-const { homeName } = config
+
+import { apiPermComponent } from '@/api/moreco/component/rbac/menu'
+
+const {homeName} = config
 
 Vue.use(Router)
 const router = new Router({
   routes,
   mode: 'history'
 })
+
 const LOGIN_PAGE_NAME = 'login'
 
 const turnTo = (to, access, next) => {
   if (canTurnTo(to.name, access, routes)) next() // 有权限，可访问
-  else next({ replace: true, name: 'error_401' }) // 无权限，重定向到401页面
+  else next({replace: true, name: 'error_401'}) // 无权限，重定向到401页面
 }
 
 router.beforeEach((to, from, next) => {
@@ -50,11 +54,46 @@ router.beforeEach((to, from, next) => {
       })
     }
   }
+  getPermissionComponent(to)
 })
 
 router.afterEach(to => {
   iView.LoadingBar.finish()
   window.scrollTo(0, 0)
 })
+
+/**
+ * 获取能访问的路径
+ */
+function getPermissionComponent(to) {
+  let path = to.path
+  let toGetComponents = false
+  let paths = store.getters.getPaths
+  if (paths !== undefined && paths !== undefined && paths.length > 0) {
+    for (let i in paths) {
+      let item = paths[i]
+      if (item === path) {
+        toGetComponents = true;
+        break;
+      }
+    }
+  }
+  if (toGetComponents) {
+    let matched = to.matched
+    let matchedPaths = []
+    for (let i in matched) {
+      let item = matched[i]
+      matchedPaths.push(item.path)
+    }
+    apiPermComponent(matchedPaths.join(',')).then(res => {
+      let components = {}
+      for (let i in res) {
+        let key = res[i].url
+        components[key] = true
+      }
+      store.commit('setComponents', components)
+    })
+  }
+}
 
 export default router

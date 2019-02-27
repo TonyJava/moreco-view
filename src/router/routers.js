@@ -1,8 +1,226 @@
 import Main from '@/components/main'
+import { moreco } from '@/router/reuters/moreco'
+import store from '@/store'
+
 /**
+ * 获取系统常量目录
+ *
+ * 登录、主页、消息、错误页面等
+ * @returns
+ */
+function getSystemMenus () {
+  return [
+    {
+      path: '/login',
+      name: 'login',
+      meta: {
+        title: 'Login - 登录',
+        hideInMenu: true
+      },
+      component: () => import('@/view/login/login.vue')
+    },
+    {
+      path: '/',
+      name: '_home',
+      redirect: '/home',
+      component: Main,
+      meta: {
+        hideInMenu: true,
+        notCache: true
+      },
+      children: [
+        {
+          path: '/home',
+          name: 'home',
+          meta: {
+            hideInMenu: true,
+            title: '首页',
+            notCache: true,
+            icon: 'md-home'
+          },
+          component: () => import('@/view/single-page/home')
+        }
+      ]
+    },
+    {
+      path: '',
+      name: 'doc',
+      meta: {
+        title: '文档',
+        href: 'https://moreco-doc.weechang.xyz',
+        icon: 'ios-book'
+      }
+    },
+    {
+      path: '/message',
+      name: 'message',
+      component: Main,
+      meta: {
+        hideInBread: true,
+        hideInMenu: true
+      },
+      children: [
+        {
+          path: 'message_page',
+          name: 'message_page',
+          meta: {
+            icon: 'md-notifications',
+            title: 'message_page'
+          },
+          component: () => import('@/view/single-page/message/index.vue')
+        }
+      ]
+    },
+    {
+      path: '/argu',
+      name: 'argu',
+      meta: {
+        hideInMenu: true
+      },
+      component: Main,
+      children: [
+        {
+          path: 'params/:id',
+          name: 'params',
+          meta: {
+            icon: 'md-flower',
+            title: route => `{{ params }}-${route.params.id}`,
+            notCache: true,
+            beforeCloseName: 'before_close_normal'
+          },
+          component: () => import('@/view/argu-page/params.vue')
+        },
+        {
+          path: 'query',
+          name: 'query',
+          meta: {
+            icon: 'md-flower',
+            title: route => `{{ query }}-${route.query.id}`,
+            notCache: true
+          },
+          component: () => import('@/view/argu-page/query.vue')
+        }
+      ]
+    },
+    {
+      path: '/401',
+      name: 'error_401',
+      meta: {
+        hideInMenu: true
+      },
+      component: () => import('@/view/error-page/401.vue')
+    },
+    {
+      path: '/500',
+      name: 'error_500',
+      meta: {
+        hideInMenu: true
+      },
+      component: () => import('@/view/error-page/500.vue')
+    },
+    {
+      path: '*',
+      name: 'error_404',
+      meta: {
+        hideInMenu: true
+      },
+      component: () => import('@/view/error-page/404.vue')
+    }
+  ]
+}
+
+/**
+ * 获取定义的常量
+ */
+function getConsts () {
+  let consts = []
+  for (let i in moreco) {
+    consts.push(moreco[i])
+  }
+  return consts
+}
+
+/**
+ * 获取授权的目录--递归
+ */
+function getPermissionMenuListCycle (children, configs) {
+  let routers = []
+  for (let i in children) {
+    let child = children[i]
+    for (let j in configs) {
+      let config = configs[j]
+      if (child.url === config.path) {
+        let router = config
+        let menuChildren = []
+        if (child.children !== undefined && child.children !== null && child.children.length > 0) {
+          menuChildren = getPermissionMenuListCycle(child.children, config.children)
+        }
+        router.path = child.url
+        router.name = child.name
+        router.meta = {
+          icon: child.icon,
+          title: child.name
+        }
+        if (child.show === 0) {
+          router.meta.hideInMenu = child.visible === 0
+        }
+        if (menuChildren.length > 0) {
+          router.children = menuChildren
+        }
+        routers.push(router)
+      }
+    }
+  }
+  return routers
+}
+
+const perminMenus = [
+  {
+    url: '/moreco/rbac',
+    name: '权限管理',
+    icon: 'md-unlock',
+    show: 1,
+    children: [
+      {
+        url: 'dept',
+        name: '部门管理',
+        icon: 'md-home',
+        visible: 1
+      },
+      {
+        url: 'resource',
+        name: '资源管理',
+        icon: 'md-cloud',
+        visible: 1
+      },
+      {
+        url: 'menu',
+        name: '目录管理',
+        icon: 'md-menu',
+        visible: 1
+      },
+      {
+        url: 'role',
+        name: '角色管理',
+        icon: 'md-people',
+        visible: 1
+      },
+      {
+        url: 'user',
+        name: '用户管理',
+        icon: 'md-person',
+        visible: 1
+      }
+    ]
+  }
+]
+
+/**
+ * 获取授权的目录列表
+ *
  * iview-admin中meta除了原生参数外可配置的参数:
  * meta: {
- *  title: { String|Number|Function }
+ * title: { String|Number|Function }
  *         显示在侧边栏、面包屑和标签栏的文字
  *         使用'{{ 多语言字段 }}'形式结合多语言使用，例子看多语言的路由配置;
  *         可以传入一个回调函数，参数是当前路由对象，例子看动态路由和带参路由
@@ -13,179 +231,22 @@ import Main from '@/components/main'
  *  icon: (-) 该页面在左侧菜单、面包屑和标签导航处显示的图标，如果是自定义图标，需要在图标名称前加下划线'_'
  *  beforeCloseName: (-) 设置该字段，则在关闭当前tab页时会去'@/router/before-close.js'里寻找该字段名对应的方法，作为关闭前的钩子函数
  * }
+ *
  */
-
-export default [
-  {
-    path: '/login',
-    name: 'login',
-    meta: {
-      title: 'Login - 登录',
-      hideInMenu: true
-    },
-    component: () => import('@/view/login/login.vue')
-  },
-  {
-    path: '/',
-    name: '_home',
-    redirect: '/home',
-    component: Main,
-    meta: {
-      hideInMenu: true,
-      notCache: true
-    },
-    children: [
-      {
-        path: '/home',
-        name: 'home',
-        meta: {
-          hideInMenu: true,
-          title: '首页',
-          notCache: true,
-          icon: 'md-home'
-        },
-        component: () => import('@/view/single-page/home')
-      }
-    ]
-  },
-  {
-    path: '',
-    name: 'doc',
-    meta: {
-      title: '文档',
-      href: 'https://moreco-doc.weechang.xyz',
-      icon: 'ios-book'
-    }
-  },
-  {
-    path: '/message',
-    name: 'message',
-    component: Main,
-    meta: {
-      hideInBread: true,
-      hideInMenu: true
-    },
-    children: [
-      {
-        path: 'message_page',
-        name: 'message_page',
-        meta: {
-          icon: 'md-notifications',
-          title: 'message_page'
-        },
-        component: () => import('@/view/single-page/message/index.vue')
-      }
-    ]
-  },
-  {
-    path: '/moreco/rbac',
-    name: 'rbac',
-    meta: {
-      icon: 'md-unlock',
-      title: 'rbac'
-    },
-    component: Main,
-    children: [
-      {
-        path: 'resource',
-        name: '资源管理',
-        meta: {
-          icon: 'md-cloud',
-          title: '资源管理'
-        },
-        component: () => import('@/view/moreco/rbac/resource.vue')
-      },
-      {
-        path: 'menu',
-        name: 'rbac_menu',
-        meta: {
-          icon: 'md-menu',
-          title: 'rbac_menu'
-        },
-        component: () => import('@/view/moreco/rbac/menu.vue')
-      },
-      {
-        path: 'dept',
-        name: 'rbac_dept',
-        meta: {
-          icon: 'md-home',
-          title: 'rbac_dept'
-        },
-        component: () => import('@/view/moreco/rbac/dept.vue')
-      },
-      {
-        path: 'role',
-        name: 'rbac_role',
-        meta: {
-          icon: 'md-people',
-          title: 'rbac_role'
-        },
-        component: () => import('@/view/moreco/rbac/role.vue')
-      },
-      {
-        path: 'user',
-        name: 'rbac_user',
-        meta: {
-          icon: 'md-person',
-          title: 'rbac_user'
-        },
-        component: () => import('@/view/moreco/rbac/user.vue')
-      }
-    ]
-  },
-  {
-    path: '/argu',
-    name: 'argu',
-    meta: {
-      hideInMenu: true
-    },
-    component: Main,
-    children: [
-      {
-        path: 'params/:id',
-        name: 'params',
-        meta: {
-          icon: 'md-flower',
-          title: route => `{{ params }}-${route.params.id}`,
-          notCache: true,
-          beforeCloseName: 'before_close_normal'
-        },
-        component: () => import('@/view/argu-page/params.vue')
-      },
-      {
-        path: 'query',
-        name: 'query',
-        meta: {
-          icon: 'md-flower',
-          title: route => `{{ query }}-${route.query.id}`,
-          notCache: true
-        },
-        component: () => import('@/view/argu-page/query.vue')
-      }
-    ]
-  },
-  {
-    path: '/401',
-    name: 'error_401',
-    meta: {
-      hideInMenu: true
-    },
-    component: () => import('@/view/error-page/401.vue')
-  },
-  {
-    path: '/500',
-    name: 'error_500',
-    meta: {
-      hideInMenu: true
-    },
-    component: () => import('@/view/error-page/500.vue')
-  },
-  {
-    path: '*',
-    name: 'error_404',
-    meta: {
-      hideInMenu: true
-    },
-    component: () => import('@/view/error-page/404.vue')
+function menuTree () {
+  let menus = []
+  let systemMenus = getSystemMenus()
+  for (let i in systemMenus) {
+    let systemMenu = systemMenus[i]
+    menus.push(systemMenu)
   }
-]
+  let authMenus = store.getters.getMenus
+  let userMenus = getPermissionMenuListCycle(authMenus, getConsts())
+  for (let i in userMenus) {
+    let userMenu = userMenus[i]
+    menus.push(userMenu)
+  }
+  return menus
+}
+
+export default menuTree()

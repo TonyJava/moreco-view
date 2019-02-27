@@ -2,29 +2,29 @@ import axios from '@/libs/api.request'
 
 export const apiPage = (params) => {
   return axios.request({
-    url: 'rbac/menu/page/',
+    url: 'moreco/component/rbac/role/page',
     method: 'GET',
     params: params
   })
 }
 
-export const apiToPage = () => {
+export const apiList = () => {
   return axios.request({
-    url: 'rbac/menu/toPage',
+    url: 'moreco/component/rbac/role/list',
     method: 'GET'
   })
 }
 
 export const apiDetail = (id) => {
   return axios.request({
-    url: 'rbac/menu/detail/' + id,
+    url: 'moreco/component/rbac/role/detail/' + id,
     method: 'GET'
   })
 }
 
 export const apiSave = (temp) => {
   return axios.request({
-    url: 'rbac/menu/save',
+    url: 'moreco/component/rbac/role/save',
     method: 'POST',
     data: temp
   })
@@ -32,14 +32,7 @@ export const apiSave = (temp) => {
 
 export const apiDelete = (id) => {
   return axios.request({
-    url: 'rbac/menu/delete/' + id,
+    url: 'moreco/component/rbac/role/delete/' + id,
     method: 'DELETE'
-  })
-}
-
-export const apiTree = () => {
-  return axios.request({
-    url: 'rbac/menu/tree',
-    method: 'GET'
   })
 }

@@ -1,23 +1,26 @@
 <style lang="less">
-  @import '../../../components/moreco/moreco.less';
+  @import '../../../../components/moreco/moreco.less';
 </style>
 <template>
   <div>
     <div style="margin-top: 20px">
       <Card>
-        <p slot="title">#角色管理</p>
+        <p slot="title">#组级机构管理</p>
         <!--查询-->
         <Row>
-          <Form :label-width="60" inline :model="listQuery">
-            <FormItem label="名称">
-              <Input type="text" v-model="listQuery.name" placeholder="角色名称">
-              </Input>
+          <Form label-position="left" :label-width="60" inline ref="formInline" :model="listQuery">
+            <FormItem label="目录类型">
+              <Select v-model="listQuery.type" style="width:200px">
+                <Option v-for="item in menuTypes" :value="item.key" :key="item.key">{{ item.name }}</Option>
+              </Select>
             </FormItem>
-            <Button type="primary" @click="doQuery()">查询</Button>
+            <Button type="primary" @click="doQuery">查询</Button>
           </Form>
         </Row>
         <Row class="moreco-table-options">
-          <Button type="primary" icon="md-add" @click="openEdit(null)">新增</Button>
+          <Button type="primary" icon="md-add" @click="openEdit(null)" v-if="components.edit">新增</Button>&nbsp;&nbsp;
+          <Button type="success" icon="ios-arrow-back" @click="goBack()" v-if="this.listQuery.parentId !== 0">返回上级
+          </Button>
         </Row>
         <!--表格-->
         <div class="moreco-table">
@@ -28,19 +31,23 @@
       </Card>
     </div>
     <!--修改-->
-    <Modal v-model="editShow" title="编辑角色">
+    <Modal v-model="editShow" title="编辑组织机构">
       <Form :label-width="70" ref="editForm" :model="temp" :rules="rules">
         <FormItem label="id" hidden>
           <Input v-model="temp.id"></Input>
         </FormItem>
+        <FormItem label="parentId" hidden>
+          <Input v-model="temp.parentId"></Input>
+        </FormItem>
+        <FormItem label="上级机构">
+          <Input v-model="this.parentName" disabled="disabled"></Input>
+        </FormItem>
         <FormItem label="名称" prop="name">
           <Input v-model="temp.name" placeholder="请输入名称"></Input>
         </FormItem>
-        <FormItem label="备注" prop="remark">
-          <Input v-model="temp.remark" placeholder="请输入备注"></Input>
+        <FormItem label="排序" prop="orderNum">
+          <Input v-model="temp.orderNum" placeholder="请输入排序值"></Input>
         </FormItem>
-        <div>目录权限</div>
-        <Tree :data="roleMenus" show-checkbox ref="roleMenuTree"></Tree>
       </Form>
       <div slot="footer">
         <Button @click="closeEdit">取消</Button>
@@ -50,8 +57,9 @@
   </div>
 </template>
 <script>
-import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/rbac/role'
-import { apiTree as apiMenuTree } from '@/api/moreco/rbac/menu'
+import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/component/rbac/dept'
+import { mapGetters } from 'vuex'
+
 export default {
   data () {
     return {
@@ -64,31 +72,41 @@ export default {
           fixed: 'left'
         },
         {
-          title: '备注',
-          key: 'remark'
-        },
-        {
-          title: '创建时间',
-          key: 'createdDate',
-          render: (h, params) => {
-            return h('div', null, params.row.dataMap.createdDate)
-          }
+          title: '排序',
+          key: 'orderNum'
         },
         {
           title: '操作',
           key: 'action',
-          width: 150,
+          width: 200,
           align: 'center',
           fixed: 'right',
           render: (h, params) => {
             return h('div', [
               h('Button', {
                 props: {
+                  type: 'success',
+                  size: 'small'
+                },
+                on: {
+                  click: () => {
+                    this.parentIdStack.push(this.listQuery.parentId)
+                    this.parentNameStack.push(this.parentName)
+                    this.listQuery.parentId = params.row.id
+                    this.parentName = params.row.name
+                    this.doQuery()
+                  }
+                }
+              }, '管理下级'),
+              h('span', {}, ' '),
+              h('Button', {
+                props: {
                   type: 'primary',
                   size: 'small'
                 },
                 style: {
-                  marginRight: '5px'
+                  marginRight: '5px',
+                  display: (this.components.edit) ? '' : 'none'
                 },
                 on: {
                   click: () => {
@@ -116,8 +134,9 @@ export default {
         currentPage: 1,
         pageSize: 10,
 
-        name: undefined
+        parentId: 0
       },
+      parentName: '顶级部门',
       // 表格参数
       pageData: [],
       totalCount: 0,
@@ -127,39 +146,36 @@ export default {
       temp: {},
       rules: {
         name: [
-          {required: true, message: '名称为必填项', trigger: 'blur'},
-          {max: 255, message: '名称最多为255个字符', trigger: 'blur'}
-        ],
-        orderNum: [
-          {min: -99999, max: 99999, message: '排序只能是-99999~99999', trigger: 'blur'}
+          { required: true, message: '名称为必填项', trigger: 'blur' },
+          { max: 255, message: '名称最多为255个字符', trigger: 'blur' }
         ]
       },
-      roleMenus: []
+      parentIdStack: [],
+      parentNameStack: [],
+      menuTypes: []
     }
   },
   methods: {
     // 表格查询
     doQuery () {
       apiPage(this.listQuery).then(res => {
-        if (res.data.code === 0) {
-          this.listQuery.currentPage = res.data.result.currentPage
-          this.listQuery.pageSize = res.data.result.pageSize
-          this.totalCount = res.data.result.totalCount
-          this.pageData = res.data.result.list
-        }
+        this.listQuery.currentPage = res.currentPage
+        this.listQuery.pageSize = res.pageSize
+        this.totalCount = res.totalCount
+        this.pageData = res.list
       })
     },
     // 打开编辑
     openEdit (id) {
       if (id !== null) {
         apiDetail(id).then(res => {
-          if (res.data.code === 0) {
-            this.temp = res.data.result
-          }
-        }).then(this.permInit)
+          this.temp = res
+        })
       } else {
-        this.temp = {}
-        this.permInit()
+        this.temp = {
+          parentId: this.listQuery.parentId,
+          orderNum: 0
+        }
       }
       this.editShow = true
     },
@@ -168,30 +184,15 @@ export default {
       this.editShow = false
       this.editLoading = false
     },
-    // 删除
-    remove (id) {
-      apiDelete(id).then(res => {
-        if (res.data.code === 0) {
-          this.doQuery()
-        }
-      })
-    },
     // 保存
     save () {
       this.editLoading = true
       this.$refs['editForm'].validate((valid) => {
-        if (valid){
-          let menuNodes = this.$refs.roleMenuTree.getCheckedNodes()
-          let menuIdList = []
-          for (let i in menuNodes) {
-            menuIdList.push(menuNodes[i].id)
-          }
-          this.temp.menuIdList = menuIdList
+        if (valid) {
+          this.temp.parentId = this.listQuery.parentId
           apiSave(this.temp).then(res => {
-            if (res.data.code === 0) {
-              this.editShow = false
-              this.doQuery()
-            }
+            this.editShow = false
+            this.doQuery()
           }).finally(() => {
             this.editLoading = false
           })
@@ -200,33 +201,26 @@ export default {
         }
       })
     },
-    // 授权初始化
-    permInit () {
-      apiMenuTree().then(res => {
-        if (res.data.code === 0) {
-          this.roleMenus = this.convert2MenuTree(res.data.result)
-        }
+    // 删除
+    remove (id) {
+      apiDelete(id).then(res => {
+        this.doQuery()
       })
     },
-    // 转换成树形数据
-    convert2MenuTree (menus) {
-      let menuTree = []
-      for (let i in menus) {
-        let item = menus[i]
-        let menu = {}
-        menu.id = item.id
-        menu.title = item.name
-        if (this.temp.menuIdList != null) {
-          menu.checked = (this.temp.menuIdList.indexOf(item.id) > -1)
-        }
-        menu.children = this.convert2MenuTree(item.children)
-        menuTree.push(menu)
-      }
-      return menuTree
+    // 返回上级
+    goBack () {
+      this.listQuery.parentId = this.parentIdStack.pop()
+      this.parentName = this.parentNameStack.pop()
+      this.doQuery()
     }
   },
   mounted () {
     this.doQuery()
+  },
+  computed: {
+    ...mapGetters([
+      'components'
+    ])
   }
 }
 </script>

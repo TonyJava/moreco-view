@@ -1,5 +1,5 @@
 <style lang="less">
-  @import '../../../components/moreco/moreco.less';
+  @import '../../../../components/moreco/moreco.less';
 </style>
 <template>
   <div>
@@ -38,13 +38,10 @@
           <Input v-model="temp.parentId"></Input>
         </FormItem>
         <FormItem label="上级目录">
-          <Input v-model="this.listQuery.parentName" disabled="disabled"></Input>
+          <Input v-model="this.parentName" disabled="disabled"></Input>
         </FormItem>
         <FormItem label="名称" prop="name">
           <Input v-model="temp.name" placeholder="请输入名称"></Input>
-        </FormItem>
-        <FormItem label="图标" prop="icon">
-          <Input v-model="temp.icon" placeholder="请输入图标"></Input>
         </FormItem>
         <FormItem label="类型" prop="type">
           <Select v-model="temp.type" style="width:200px">
@@ -54,8 +51,11 @@
         <FormItem label="路由" prop="url">
           <Input v-model="temp.url" placeholder="请输入路由"></Input>
         </FormItem>
-        <FormItem label="是否显示" prop="show">
-          <i-switch v-model="temp.show">
+        <FormItem label="图标" prop="icon" v-if="temp.type !== 2">
+          <Input v-model="temp.icon" placeholder="请输入图标"></Input>
+        </FormItem>
+        <FormItem label="是否显示" prop="show" v-if="temp.type !== 2">
+          <i-switch v-model="temp.visible" trueValue="1" false-value="0">
             <span slot="open">是</span>
             <span slot="close">否</span>
           </i-switch>
@@ -69,10 +69,22 @@
         <Button type="primary" :loading="editLoading" @click="save">保存</Button>
       </div>
     </Modal>
+    <!--资源管理-->
+    <Modal v-model="resourceShow" title="资源管理">
+      <!--资源绑定-->
+      <Row>
+        <Tree :data="tagNodes" show-checkbox multiple ref="menuResourceTree"></Tree>
+      </Row>
+      <div slot="footer">
+        <Button @click="resourceShow = false">取消</Button>
+        <Button type="primary" :loading="resourceLoading" @click="saveResource">保存</Button>
+      </div>
+    </Modal>
   </div>
 </template>
 <script>
-import { apiPage, apiToPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/rbac/menu'
+import { apiPage, apiToPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/component/rbac/menu'
+import { apiTagTree as apiResourceTagTree} from '@/api/moreco/component/rbac/resource'
 export default {
   data () {
     return {
@@ -125,13 +137,16 @@ export default {
         },
         {
           title: '是否显示',
-          key: 'show',
+          key: 'visible',
           render: (h, params) => {
             return h('i-switch', {
               props: {
-                disabled: true
+                disabled: true,
+                trueValue: 1,
+                falseValue: 0,
+                value: params.row.visible
               }
-            }, params.row.show)
+            })
           }
         },
         {
@@ -151,24 +166,44 @@ export default {
                   type: 'success',
                   size: 'small'
                 },
+                style: {
+                  marginRight: '5px',
+                  marginTop: '5px'
+                },
                 on: {
                   click: () => {
                     this.parentIdStack.push(this.listQuery.parentId)
-                    this.parentNameStack.push(this.listQuery.parentName)
+                    this.parentNameStack.push(this.parentName)
                     this.listQuery.parentId = params.row.id
-                    this.listQuery.parentName = params.row.name
+                    this.parentName = params.row.name
                     this.doQuery()
                   }
                 }
               }, '管理下级'),
-              h('span', {}, ' '),
+              h('Button', {
+                props: {
+                  type: 'success',
+                  size: 'small'
+                },
+                style: {
+                  marginTop: '5px'
+                },
+                on: {
+                  click: () => {
+                    this.openResource(params.row.id)
+                  }
+                }
+              }, '资源管理'),
+              h('br'),
               h('Button', {
                 props: {
                   type: 'primary',
                   size: 'small'
                 },
                 style: {
-                  marginRight: '5px'
+                  marginRight: '5px',
+                  marginTop: '5px',
+                  marginBottom: '5px'
                 },
                 on: {
                   click: () => {
@@ -180,6 +215,10 @@ export default {
                 props: {
                   type: 'error',
                   size: 'small'
+                },
+                style: {
+                  marginTop: '5px',
+                  marginBottom: '5px'
                 },
                 on: {
                   click: () => {
@@ -197,9 +236,9 @@ export default {
         pageSize: 10,
 
         parentId: 0,
-        parentName: '顶级目录',
         type: undefined
       },
+      parentName: '顶级目录',
       // 表格参数
       pageData: [],
       totalCount: 0,
@@ -221,48 +260,45 @@ export default {
         ],
         remark: [
           { max: 255, message: '备注最多为255个字符', trigger: 'blur' }
-        ],
-        orderNum: [
-          { min: -99999, max: 99999, message: '排序只能是-99999~99999', trigger: 'blur' }
         ]
       },
       parentIdStack: [],
       parentNameStack: [],
-      menuTypes: []
+      menuTypes: [],
+      // 资源管理
+      resourceMenuId: undefined,
+      resourceShow: false,
+      resourceLoading: false,
+      tagNodes: []
     }
   },
   methods: {
     // 页面初始化
     initPage () {
       apiToPage().then(res => {
-        if (res.data.code === 0) {
-          this.menuTypes = res.data.result.menuTypes
-        }
+        this.menuTypes = res.menuTypes
       })
     },
     // 表格查询
     doQuery () {
       apiPage(this.listQuery).then(res => {
-        if (res.data.code === 0) {
-          this.listQuery.currentPage = res.data.result.currentPage
-          this.listQuery.pageSize = res.data.result.pageSize
-          this.totalCount = res.data.result.totalCount
-          this.pageData = res.data.result.list
-        }
+        this.listQuery.currentPage = res.currentPage
+        this.listQuery.pageSize = res.pageSize
+        this.totalCount = res.totalCount
+        this.pageData = res.list
       })
     },
     // 打开编辑
     openEdit (id) {
       if (id !== null) {
         apiDetail(id).then(res => {
-          if (res.data.code === 0) {
-            this.temp = res.data.result
-          }
+          this.temp = res
+          this.temp.visible = this.temp.visible + ''
         })
       } else {
         this.temp = {
           parentId: this.listQuery.parentId,
-          show: true,
+          visible: '1',
           orderNum: 0
         }
       }
@@ -284,9 +320,7 @@ export default {
           apiSave(this.temp).then(res => {
             this.editLoading = false
             this.editShow = false
-            if (res.data.code === 0) {
-              this.doQuery()
-            }
+            this.doQuery()
           }).finally(() => {
             this.editLoading = false
           })
@@ -298,16 +332,75 @@ export default {
     // 删除
     remove (id) {
       apiDelete(id).then(res => {
-        if (res.data.code === 0) {
-          this.doQuery()
-        }
+        this.doQuery()
       })
     },
     // 返回上级
     goBack () {
       this.listQuery.parentId = this.parentIdStack.pop()
-      this.listQuery.parentName = this.parentNameStack.pop()
+      this.parentName = this.parentNameStack.pop()
       this.doQuery()
+    },
+    // 资源管理
+    openResource (id) {
+      this.resourceShow = true
+      this.resourceMenuId = id
+      this.doTagTree()
+    },
+    // 资源查询
+    doTagTree () {
+      let params = {
+        menuId: this.resourceMenuId
+      }
+      this.tagNodes = []
+      apiResourceTagTree(params).then(res => {
+        let data = res
+        for (let i in data) {
+          let tag = data[i]
+          let children = []
+          let expand = false
+          for (let j in tag.dataMap.resources) {
+            let resource = tag.dataMap.resources[j]
+            let child = {
+              title: resource.name + '-' + resource.path + '-' + resource.method + '(' + resource.remark + ')',
+              checked: resource.dataMap.checked,
+              resourceId: resource.id
+            }
+            if (!expand && child.checked) {
+              expand = true
+            }
+            children.push(child)
+          }
+          let node = {
+            title: tag.tag,
+            checked: tag.dataMap.checked,
+            disableCheckbox: true,
+            expand: expand,
+            children: children
+          }
+          this.tagNodes.push(node)
+        }
+      })
+    },
+    // 保存资源
+    saveResource () {
+      this.resourceLoading = true
+      let resourceNodes = this.$refs.menuResourceTree.getCheckedNodes()
+      let resourceIds = []
+      for (let i in resourceNodes) {
+        if (resourceNodes[i].resourceId !== undefined && resourceNodes[i].resourceId !== null) {
+          resourceIds.push(resourceNodes[i].resourceId)
+        }
+      }
+      let params = {
+        id: this.resourceMenuId,
+        resourceIds: resourceIds
+      }
+      apiSave(params).then(res => {
+        this.resourceShow = false
+      }).finally(() => {
+        this.resourceLoading = false
+      })
     }
   },
   mounted () {

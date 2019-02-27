@@ -1,24 +1,16 @@
 <style lang="less">
-  @import '../../../components/moreco/moreco.less';
+  @import '../../../../components/moreco/moreco.less';
 </style>
 <template>
   <div>
     <div style="margin-top: 20px">
       <Card>
-        <p slot="title">#资源管理</p>
+        <p slot="title">#角色管理</p>
         <!--查询-->
         <Row>
           <Form :label-width="60" inline :model="listQuery">
-            <FormItem label="资源名称">
-              <Input type="text" v-model="listQuery.name" placeholder="资源名称">
-              </Input>
-            </FormItem>
-            <FormItem label="路径">
-              <Input type="text" v-model="listQuery.path" placeholder="路径">
-              </Input>
-            </FormItem>
-            <FormItem label="标签">
-              <Input type="text" v-model="listQuery.tag" placeholder="标签">
+            <FormItem label="名称">
+              <Input type="text" v-model="listQuery.name" placeholder="角色名称">
               </Input>
             </FormItem>
             <Button type="primary" @click="doQuery()">查询</Button>
@@ -35,27 +27,20 @@
               show-sizer></Page>
       </Card>
     </div>
-    <!--资源-->
-    <Modal v-model="editShow" title="编辑资源">
+    <!--修改-->
+    <Modal v-model="editShow" title="编辑角色">
       <Form :label-width="70" ref="editForm" :model="temp" :rules="rules">
         <FormItem label="id" hidden>
           <Input v-model="temp.id"></Input>
         </FormItem>
         <FormItem label="名称" prop="name">
-          <Input v-model="temp.name" placeholder="名称"></Input>
-        </FormItem>
-        <FormItem label="路径" prop="path">
-          <Input v-model="temp.path" placeholder="路径"></Input>
-        </FormItem>
-        <!--<FormItem label="请求方法" prop="method">-->
-          <!--<Input v-model="temp.method" placeholder="请输入请求方法"></Input>-->
-        <!--</FormItem>-->
-        <FormItem label="标签" prop="tag">
-          <Input v-model="temp.tag" placeholder="标签"></Input>
+          <Input v-model="temp.name" placeholder="请输入名称"></Input>
         </FormItem>
         <FormItem label="备注" prop="remark">
-          <Input v-model="temp.remark" placeholder="备注"></Input>
+          <Input v-model="temp.remark" placeholder="请输入备注"></Input>
         </FormItem>
+        <div>目录权限</div>
+        <Tree :data="roleMenus" show-checkbox multiple ref="roleMenuTree"></Tree>
       </Form>
       <div slot="footer">
         <Button @click="closeEdit">取消</Button>
@@ -65,8 +50,8 @@
   </div>
 </template>
 <script>
-import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/rbac/resource'
-
+import { apiPage, apiDetail, apiSave, apiDelete } from '@/api/moreco/component/rbac/role'
+import { apiTree as apiMenuTree } from '@/api/moreco/component/rbac/menu'
 export default {
   data () {
     return {
@@ -79,20 +64,15 @@ export default {
           fixed: 'left'
         },
         {
-          title: '路径',
-          key: 'path'
-        },
-        // {
-        //   title: '请求方法',
-        //   key: 'method'
-        // },
-        {
-          title: '标签',
-          key: 'tag'
-        },
-        {
           title: '备注',
           key: 'remark'
+        },
+        {
+          title: '创建时间',
+          key: 'createdDate',
+          render: (h, params) => {
+            return h('div', null, params.row.dataMap.createdDate)
+          }
         },
         {
           title: '操作',
@@ -135,8 +115,8 @@ export default {
       listQuery: {
         currentPage: 1,
         pageSize: 10,
-        name: undefined,
-        path: undefined
+
+        name: undefined
       },
       // 表格参数
       pageData: [],
@@ -149,46 +129,31 @@ export default {
         name: [
           { required: true, message: '名称为必填项', trigger: 'blur' },
           { max: 255, message: '名称最多为255个字符', trigger: 'blur' }
-        ],
-        path: [
-          { required: true, message: '路径为必填项', trigger: 'blur' },
-          { max: 255, message: '路径最多为255个字符', trigger: 'blur' }
-        ],
-        // method: [
-        //   {required: true, message: '请求方法为必填项', trigger: 'blur'}
-        // ],
-        tag: [
-          { required: true, message: '标签为必填项', trigger: 'blur' },
-          { max: 255, message: '标签最多为255个字符', trigger: 'blur' }
-        ],
-        remark: [
-          { max: 255, message: '备注最多为255个字符', trigger: 'blur' }
         ]
-      }
+      },
+      roleMenus: []
     }
   },
   methods: {
     // 表格查询
     doQuery () {
       apiPage(this.listQuery).then(res => {
-        if (res.data.code === 0) {
-          this.listQuery.currentPage = res.data.result.currentPage
-          this.listQuery.pageSize = res.data.result.pageSize
-          this.totalCount = res.data.result.totalCount
-          this.pageData = res.data.result.list
-        }
+        this.listQuery.currentPage = res.currentPage
+        this.listQuery.pageSize = res.pageSize
+        this.totalCount = res.totalCount
+        this.pageData = res.list
       })
     },
     // 打开编辑
     openEdit (id) {
       if (id !== null) {
         apiDetail(id).then(res => {
-          if (res.data.code === 0) {
-            this.temp = res.data.result
-          }
-        })
+          this.temp = res
+          this.temp.menuIds = this.temp.dataMap.menuIds
+        }).then(this.permInit)
       } else {
         this.temp = {}
+        this.permInit()
       }
       this.editShow = true
     },
@@ -200,9 +165,7 @@ export default {
     // 删除
     remove (id) {
       apiDelete(id).then(res => {
-        if (res.data.code === 0) {
-          this.doQuery()
-        }
+        this.doQuery()
       })
     },
     // 保存
@@ -210,11 +173,15 @@ export default {
       this.editLoading = true
       this.$refs['editForm'].validate((valid) => {
         if (valid) {
+          let menuNodes = this.$refs.roleMenuTree.getCheckedNodes()
+          let menuIds = []
+          for (let i in menuNodes) {
+            menuIds.push(menuNodes[i].id)
+          }
+          this.temp.menuIds = menuIds
           apiSave(this.temp).then(res => {
-            if (res.data.code === 0) {
-              this.editShow = false
-              this.doQuery()
-            }
+            this.editShow = false
+            this.doQuery()
           }).finally(() => {
             this.editLoading = false
           })
@@ -222,6 +189,28 @@ export default {
           this.editLoading = false
         }
       })
+    },
+    // 授权初始化
+    permInit () {
+      apiMenuTree().then(res => {
+        this.roleMenus = this.convert2MenuTree(res)
+      })
+    },
+    // 转换成树形数据
+    convert2MenuTree (menus) {
+      let menuTree = []
+      for (let i in menus) {
+        let item = menus[i]
+        let menu = {}
+        menu.id = item.id
+        menu.title = item.name
+        if (this.temp.menuIds != null) {
+          menu.checked = (this.temp.menuIds.indexOf(item.id) > -1)
+        }
+        menu.children = this.convert2MenuTree(item.children)
+        menuTree.push(menu)
+      }
+      return menuTree
     }
   },
   mounted () {
